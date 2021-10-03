@@ -69,6 +69,6 @@ describe('special functions', () => {
   it('recognizes paramTokens', () => {
     const input = 'text size position width background justify padding grid gap headerfooter data source'
     const lexingRes = EzLexer.tokenize(input)
-    lexingRes.groups.paramTokens.forEach((token) => expect(token.tokenType).toBe(tokensMap[token.image]))
+    lexingRes.tokens.forEach((token) => expect(token.tokenType).toBe(tokensMap[token.image]))
   })
 })

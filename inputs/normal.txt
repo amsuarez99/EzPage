@@ -3,14 +3,7 @@ page MyFirstMFPage
 int something, something1[5] = [1,2,3], somethingElse = 24, abcd[10] = [1]
 string hola = "hola mundo"
 int abcd = "hola"
-
-string algo() {
-    return
-}
-
-void hello() {
-    return
-}
+int something[5][7] = [1,2,3,4,5,6,7,8,9,10]
 
 string something() {
   string hello = "hello"
@@ -18,9 +11,9 @@ string something() {
 }
 
 void render() {
-  int something = 8
+  int something = 8.8
   container() {
-    header()
-    header()
+    heading(size: 'h1', text: "hello world")
+    heading(size: 'h2', text: "hello 2")
   }
 }

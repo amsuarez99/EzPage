@@ -21,7 +21,7 @@ export const RBracket = createToken({ name: 'RBracket', pattern: /]/, label: ']'
 export const OParentheses = createToken({ name: 'OParentheses', pattern: /\(/, label: '(' })
 export const CParentheses = createToken({ name: 'CParentheses', pattern: /\)/, label: ')' })
 export const Comma = createToken({ name: 'Comma', pattern: /,/, label: ',' })
-export const Return = createToken({ name: 'Return', pattern: /return/ })
+export const Return = createToken({ name: 'Return', pattern: /return/, label: 'return' })
 
 // Operations
 export const Times = createToken({ name: 'Times', pattern: /\*/, label: '*' })
@@ -41,52 +41,56 @@ export const OR = createToken({ name: 'OR', pattern: /\|\|/, label: '||' })
 export const AND = createToken({ name: 'AND', pattern: /&&/, label: '&&' })
 
 // Conditionals
-export const If = createToken({ name: 'If', pattern: /if/ })
-export const Else = createToken({ name: 'Else', pattern: /else/ })
+export const If = createToken({ name: 'If', pattern: /if/, label: 'if' })
+export const Else = createToken({ name: 'Else', pattern: /else/, label: 'else' })
 
-export const Print = createToken({ name: 'Print', pattern: /print/ })
-export const Page = createToken({ name: 'Page', pattern: /page/ })
+export const Print = createToken({ name: 'Print', pattern: /print/, label: 'print' })
+export const Page = createToken({ name: 'Page', pattern: /page/, label: 'page' })
 
 // Repetition
-export const For = createToken({ name: 'For', pattern: /for/ })
-export const Step = createToken({ name: 'Step', pattern: /step/ })
-export const To = createToken({ name: 'To', pattern: /to/ })
-export const While = createToken({ name: 'While', pattern: /while/ })
+export const For = createToken({ name: 'For', pattern: /for/, label: 'for' })
+export const Step = createToken({ name: 'Step', pattern: /step/, label: 'step' })
+export const To = createToken({ name: 'To', pattern: /to/, label: 'to' })
+export const While = createToken({ name: 'While', pattern: /while/, label: 'while' })
 
 // Types
-export const Int = createToken({ name: 'Int', pattern: /int/ })
-export const Float = createToken({ name: 'Float', pattern: /float/ })
-export const Char = createToken({ name: 'Char', pattern: /char/ })
-export const Bool = createToken({ name: 'Bool', pattern: /bool/ })
-export const StringType = createToken({ name: 'StringType', pattern: /string/ })
-export const Void = createToken({ name: 'Void', pattern: /void/ })
+export const Int = createToken({ name: 'Int', pattern: /int/, label: 'int' })
+export const Float = createToken({ name: 'Float', pattern: /float/, label: 'float' })
+export const Char = createToken({ name: 'Char', pattern: /char/, label: 'char' })
+export const Bool = createToken({ name: 'Bool', pattern: /bool/, label: 'bool' })
+export const StringType = createToken({ name: 'StringType', pattern: /string/, label: 'string' })
+export const Void = createToken({ name: 'Void', pattern: /void/, label: 'void' })
 
 // Render Tokens
-export const Render = createToken({ name: 'Render', pattern: /render/ })
+export const Render = createToken({ name: 'Render', pattern: /render/, label: 'render' })
 
 // TODO: Define render params
 // const RndrTokens = createToken({ name: "RndrTokens", pattern: /render/ })
-export const Container = createToken({ name: 'Container', pattern: /container/ })
-export const Heading = createToken({ name: 'Heading', pattern: /heading/ })
-export const Paragraph = createToken({ name: 'Paragraph', pattern: /paragraph/ })
-export const Table = createToken({ name: 'Table', pattern: /table/ })
-export const Image = createToken({ name: 'Image', pattern: /image/ })
-export const Card = createToken({ name: 'Card', pattern: /card/ })
-export const Layout = createToken({ name: 'Layout', pattern: /layout/ })
+export const Container = createToken({ name: 'Container', pattern: /container/, label: 'container' })
+export const Heading = createToken({ name: 'Heading', pattern: /heading/, label: 'heading' })
+export const Paragraph = createToken({ name: 'Paragraph', pattern: /paragraph/, label: 'paragraph' })
+export const Table = createToken({ name: 'Table', pattern: /table/, label: 'table' })
+export const Image = createToken({ name: 'Image', pattern: /image/, label: 'image' })
+export const Card = createToken({ name: 'Card', pattern: /card/, label: 'card' })
+export const Layout = createToken({ name: 'Layout', pattern: /layout/, label: 'layout' })
 
-export const Text = createToken({ name: 'Text', pattern: /text/, group: 'paramTokens' })
-export const Size = createToken({ name: 'Size', pattern: /size/, group: 'paramTokens' })
-export const Position = createToken({ name: 'Position', pattern: /position/, group: 'paramTokens' })
-export const Width = createToken({ name: 'Width', pattern: /width/, group: 'paramTokens' })
-export const Background = createToken({ name: 'Background', pattern: /background/, group: 'paramTokens' })
-export const Justify = createToken({ name: 'Justify', pattern: /justify/, group: 'paramTokens' })
-export const Padding = createToken({ name: 'Padding', pattern: /padding/, group: 'paramTokens' })
-export const Grid = createToken({ name: 'Grid', pattern: /grid/, group: 'paramTokens' })
-export const Gap = createToken({ name: 'Gap', pattern: /gap/, group: 'paramTokens' })
-export const Header = createToken({ name: 'Header', pattern: /header/, group: 'paramTokens' })
-export const Footer = createToken({ name: 'Footer', pattern: /footer/, group: 'paramTokens' })
-export const Data = createToken({ name: 'Data', pattern: /data/, group: 'paramTokens' })
-export const Source = createToken({ name: 'Source', pattern: /source/, group: 'paramTokens' })
+export const Text = createToken({ name: 'Text', pattern: /text/, label: 'text' })
+export const Size = createToken({ name: 'Size', pattern: /size/, label: 'size' })
+export const Position = createToken({ name: 'Position', pattern: /position/, label: 'position' })
+export const Width = createToken({ name: 'Width', pattern: /width/, label: 'width' })
+export const Background = createToken({
+  name: 'Background',
+  pattern: /background/,
+  label: 'background',
+})
+export const Justify = createToken({ name: 'Justify', pattern: /justify/, label: 'justify' })
+export const Padding = createToken({ name: 'Padding', pattern: /padding/, label: 'padding' })
+export const Grid = createToken({ name: 'Grid', pattern: /grid/, label: 'grid' })
+export const Gap = createToken({ name: 'Gap', pattern: /gap/, label: 'gap' })
+export const Header = createToken({ name: 'Header', pattern: /header/, label: 'header' })
+export const Footer = createToken({ name: 'Footer', pattern: /footer/, label: 'footer' })
+export const Data = createToken({ name: 'Data', pattern: /data/, label: 'data' })
+export const Source = createToken({ name: 'Source', pattern: /source/, label: 'source' })
 
 const WhiteSpace = createToken({
   name: 'WhiteSpace',
