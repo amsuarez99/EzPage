@@ -244,7 +244,6 @@ class EzParser extends CstParser {
     })
   })
 
-  // TODO: Checar negativos
   public factorExp = this.RULE('factorExp', () => {
     this.OPTION(() => this.CONSUME(Lexer.Minus))
     this.OR([
@@ -394,7 +393,28 @@ class EzParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.Id)
+        this.OR([
+          {
+            ALT: () => {
+              this.CONSUME(Lexer.Justify)
+            },
+          },
+          {
+            ALT: () => {
+              this.CONSUME(Lexer.Background)
+            },
+          },
+          {
+            ALT: () => {
+              this.CONSUME(Lexer.Width)
+            },
+          },
+          {
+            ALT: () => {
+              this.CONSUME(Lexer.Position)
+            },
+          },
+        ])
         this.CONSUME(Lexer.Colon)
         this.OR([
           {
@@ -430,8 +450,8 @@ class EzParser extends CstParser {
     })
   })
 
-  public header = this.RULE('header', () => {
-    this.CONSUME(Lexer.Header)
+  public header = this.RULE('heading', () => {
+    this.CONSUME(Lexer.Heading)
     this.CONSUME(Lexer.OParentheses)
     this.SUBRULE(this.headerParams)
     this.CONSUME(Lexer.CParentheses)
@@ -441,8 +461,8 @@ class EzParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.Id)
-        this.CONSUME(Lexer.Colon)
+        this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }]),
+          this.CONSUME(Lexer.Colon)
         this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVars) }])
       },
     })
@@ -459,8 +479,8 @@ class EzParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.Id)
-        this.CONSUME(Lexer.Colon)
+        this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }]),
+          this.CONSUME(Lexer.Colon)
         this.SUBRULE(this.variable)
       },
     })
