@@ -5,6 +5,8 @@
   "main": "build/index.js",
   "scripts": {
     "build": "tsc -p .",
+    "build:watch": "tsc -w -p .",
+    "start": "nodemon --watch './**/*.ts' --exec 'ts-node' demo/test.ts",
     "check-types": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint --ignore-path .gitignore .",
@@ -21,6 +23,7 @@
     "@typescript-eslint/parser": "^4.32.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
+    "nodemon": "^2.0.13",
     "tsc": "^2.0.3",
     "typescript": "^4.4.3"
   },
