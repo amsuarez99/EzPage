@@ -1,16 +1,12 @@
 import { CstParser } from 'chevrotain'
 import * as Lexer from '..'
-import fs from 'fs'
 
-class LangParser extends CstParser {
+class EzParser extends CstParser {
   constructor() {
     super(Lexer.tokens)
     this.performSelfAnalysis()
   }
 
-  // int x = 4
-  // int y
-  // void something()
   public page = this.RULE('page', () => {
     this.CONSUME(Lexer.Page)
     this.CONSUME(Lexer.Id)
@@ -68,7 +64,7 @@ class LangParser extends CstParser {
       this.AT_LEAST_ONE_SEP({
         SEP: Lexer.Comma,
         DEF: () => {
-          this.SUBRULE(this.baseExp)
+          this.SUBRULE(this.constantVars)
         },
       })
       this.CONSUME1(Lexer.RBracket)
@@ -132,12 +128,12 @@ class LangParser extends CstParser {
 
   public statement = this.RULE('statement', () => {
     this.OR([
+      { ALT: () => this.SUBRULE(this.vars) },
       { ALT: () => this.SUBRULE(this.assignment) },
       { ALT: () => this.SUBRULE(this.funcCall) },
       { ALT: () => this.SUBRULE(this.ifStatement) },
       { ALT: () => this.SUBRULE(this.whileLoop) },
       { ALT: () => this.SUBRULE(this.forLoop) },
-      { ALT: () => this.SUBRULE(this.vars) },
       { ALT: () => this.SUBRULE(this.return) },
       { ALT: () => this.SUBRULE(this.print) },
     ])
@@ -170,7 +166,6 @@ class LangParser extends CstParser {
     ])
   })
 
-  // TODO: Matrixes
   public variable = this.RULE('variable', () => {
     this.CONSUME(Lexer.Id)
     this.OPTION(() => {
@@ -397,7 +392,7 @@ class LangParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.HdrTokens)
+        this.CONSUME(Lexer.Id)
         this.CONSUME(Lexer.Colon)
         this.OR([
           {
@@ -426,7 +421,7 @@ class LangParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.PgrphTokens)
+        this.CONSUME(Lexer.Id)
         this.CONSUME(Lexer.Colon)
         this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVars) }])
       },
@@ -444,7 +439,7 @@ class LangParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.HdrTokens)
+        this.CONSUME(Lexer.Id)
         this.CONSUME(Lexer.Colon)
         this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVars) }])
       },
@@ -462,7 +457,7 @@ class LangParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.TblTokens)
+        this.CONSUME(Lexer.Id)
         this.CONSUME(Lexer.Colon)
         this.SUBRULE(this.variable)
       },
@@ -480,7 +475,7 @@ class LangParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.ImgTokens)
+        this.CONSUME(Lexer.Id)
         this.CONSUME(Lexer.Colon)
         this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVars) }])
       },
@@ -499,7 +494,7 @@ class LangParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.CrdTokens)
+        this.CONSUME(Lexer.Id)
         this.CONSUME(Lexer.Colon)
         this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVars) }])
       },
@@ -518,7 +513,7 @@ class LangParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.CONSUME(Lexer.LytTokens)
+        this.CONSUME(Lexer.Id)
         this.CONSUME(Lexer.Colon)
         this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVars) }])
       },
@@ -526,78 +521,4 @@ class LangParser extends CstParser {
   })
 }
 
-const parser = new LangParser()
-
-function genDiagram(text: string) {
-  const lexResult = Lexer.LangLexer.tokenize(text)
-  // setting a new input will RESET the parser instance's state.
-  parser.input = lexResult.tokens
-  // any top level rule may be used as an entry point
-  const cst = parser.page()
-
-  // this would be a TypeScript compilation error because our parser now has a clear API.
-  // let value = parser.json_OopsTypo()
-
-  return {
-    // This is a pure grammar, the value will be undefined until we add embedded actions
-    // or enable automatic CST creation.
-    cst: cst,
-    lexErrors: lexResult.errors,
-    parseErrors: parser.errors,
-    parseInstance: parser,
-  }
-}
-
-function parseInput(text: string) {
-  const lexingResult = Lexer.LangLexer.tokenize(text)
-  // "input" is a setter which will reset the parser's state.
-  parser.input = lexingResult.tokens
-  parser.page()
-
-  if (parser.errors.length > 0) {
-    throw new Error(parser.errors.toString())
-  } else {
-    console.log('Sucess! No errors!')
-  }
-}
-
-const file = `
-page MyFirstMFPage
-
-int something, something1[5] = [1,2,3], somethingElse = 24, abcd[10] = [1]
-string hola = "hola mundo"
-int abcd = "hola"
-
-string algo() {
-    return
-}
-
-void hello() {
-    return
-}
-
-string something() {
-  string hello = "hello"
-  return hello
-}
-
-void render() {
-  int something = 8.8
-  container() {
-    header()
-    header()
-  }
-}
-`
-
-try {
-  // read contents of the file
-  const data = fs.readFileSync('test.txt', { encoding: 'utf-8' })
-  console.log(data)
-  parseInput(file)
-} catch (err) {
-  console.error(err)
-}
-
-const p = genDiagram('test')
-export default p
+export default EzParser

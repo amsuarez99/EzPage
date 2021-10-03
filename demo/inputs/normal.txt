@@ -1,0 +1,26 @@
+page MyFirstMFPage
+
+int something, something1[5] = [1,2,3], somethingElse = 24, abcd[10] = [1]
+string hola = "hola mundo"
+int abcd = "hola"
+
+string algo() {
+    return
+}
+
+void hello() {
+    return
+}
+
+string something() {
+  string hello = "hello"
+  return hello
+}
+
+void render() {
+  int something = 8
+  container() {
+    header()
+    header()
+  }
+}
