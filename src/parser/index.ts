@@ -166,6 +166,8 @@ class EzParser extends CstParser {
     ])
   })
 
+  // table(someId: someId)
+  //
   public variable = this.RULE('variable', () => {
     this.CONSUME(Lexer.Id)
     this.OPTION(() => {
