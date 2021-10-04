@@ -13,7 +13,7 @@ string something() {
 void render() {
   int something = 8.8
   container() {
-    heading(size: 'h1', text: "hello world")
+    heading(size: 'h1', text: "hello 1")
     heading(size: 'h2', text: "hello 2")
   }
 }

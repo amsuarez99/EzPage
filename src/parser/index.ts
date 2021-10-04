@@ -11,6 +11,7 @@ class EzParser extends CstParser {
     this.CONSUME(Lexer.Page)
     this.CONSUME(Lexer.Id)
     this.MANY({
+      // Look ahead one token to see if render (our main method) is ahead
       GATE: () => this.LA(1).tokenType !== Lexer.Render,
       DEF: () => {
         this.OR([
@@ -26,22 +27,22 @@ class EzParser extends CstParser {
 
   public vars = this.RULE('vars', () => {
     this.SUBRULE(this.type)
-    this.CONSUME(Lexer.Id)
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
+        this.CONSUME(Lexer.Id)
         this.OPTION(() => {
           this.CONSUME(Lexer.LBracket)
           this.CONSUME(Lexer.cInt)
           this.CONSUME(Lexer.RBracket)
         })
         this.OPTION1(() => {
-          this.CONSUME(Lexer.LBracket)
-          this.CONSUME(Lexer.cInt)
-          this.CONSUME(Lexer.RBracket)
+          this.CONSUME1(Lexer.LBracket)
+          this.CONSUME1(Lexer.cInt)
+          this.CONSUME1(Lexer.RBracket)
         })
         this.OPTION2(() => {
           this.CONSUME(Lexer.Equals)
-          this.OR([{ ALT: () => this.SUBRULE(this.constantVars) }, { ALT: () => this.SUBRULE(this.array) }])
+          this.OR([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.array) }])
         })
       },
       SEP: Lexer.Comma,
@@ -51,10 +52,10 @@ class EzParser extends CstParser {
   public array = this.RULE('array', () => {
     this.CONSUME1(Lexer.LBracket)
     this.AT_LEAST_ONE_SEP({
-      SEP: Lexer.Comma,
       DEF: () => {
-        this.SUBRULE(this.constantVars)
+        this.OR([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
       },
+      SEP: Lexer.Comma,
     })
     this.CONSUME1(Lexer.RBracket)
   })
@@ -81,19 +82,6 @@ class EzParser extends CstParser {
         this.SUBRULE(this.type)
         this.CONSUME(Lexer.Id)
       },
-    })
-  })
-
-  public renderElementArgs = this.RULE('renderElementArgs', (args: TokenType[]) => {
-    // This returns an array with all the possible tokens
-    const tokenAlternatives = args.map((arg) => ({ ALT: () => this.CONSUME(arg) }))
-    this.AT_LEAST_ONE_SEP({
-      DEF: () => {
-        this.OR(tokenAlternatives)
-        this.CONSUME(Lexer.Colon)
-        this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVars) }])
-      },
-      SEP: Lexer.Comma,
     })
   })
 
@@ -142,7 +130,7 @@ class EzParser extends CstParser {
 
   // ? Renombrar a constante
   // TODO: CREO QUE FALTA CONSTANTE CHAR
-  public constantVars = this.RULE('constantVars', () => {
+  public constantVar = this.RULE('constantVar', () => {
     this.OR([
       {
         ALT: () => {
@@ -189,7 +177,6 @@ class EzParser extends CstParser {
     this.SUBRULE(this.baseExp)
   })
 
-  // Lowest Prio
   public baseExp = this.RULE('baseExp', () => {
     this.AT_LEAST_ONE_SEP({
       SEP: Lexer.OR,
@@ -255,7 +242,7 @@ class EzParser extends CstParser {
           this.CONSUME(Lexer.CParentheses)
         },
       },
-      { ALT: () => this.SUBRULE(this.constantVars) },
+      { ALT: () => this.SUBRULE(this.constantVar) },
       { ALT: () => this.SUBRULE(this.funcCall) },
       { ALT: () => this.SUBRULE(this.variable) },
     ])
@@ -320,7 +307,7 @@ class EzParser extends CstParser {
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVars) }])
+        this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVar) }])
       },
     })
     this.CONSUME(Lexer.CParentheses)
@@ -385,55 +372,139 @@ class EzParser extends CstParser {
   public container = this.RULE('container', () => {
     this.CONSUME(Lexer.Container)
     this.CONSUME(Lexer.OParentheses)
-    this.OPTION(() =>
-      this.SUBRULE(this.renderElementArgs, { ARGS: [Lexer.Justify, Lexer.Background, Lexer.Width, Lexer.Position] }),
-    )
+    this.OPTION(() => this.SUBRULE(this.containerArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
+  })
+
+  public containerArgs = this.RULE('containerArgs', () => {
+    this.AT_LEAST_ONE_SEP({
+      DEF: () => {
+        this.OR([
+          { ALT: () => this.CONSUME(Lexer.Justify) },
+          { ALT: () => this.CONSUME(Lexer.Background) },
+          { ALT: () => this.CONSUME(Lexer.Width) },
+          { ALT: () => this.CONSUME(Lexer.Position) },
+        ])
+        this.CONSUME(Lexer.Colon)
+        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+      },
+      SEP: Lexer.Comma,
+    })
   })
 
   public paragraph = this.RULE('paragraph', () => {
     this.CONSUME(Lexer.Paragraph)
     this.CONSUME(Lexer.OParentheses)
-    this.OPTION(() => this.SUBRULE(this.renderElementArgs, { ARGS: [Lexer.Text] }))
+    this.OPTION(() => this.SUBRULE(this.paragraphArgs))
     this.CONSUME(Lexer.CParentheses)
+  })
+
+  public paragraphArgs = this.RULE('paragraphArgs', () => {
+    this.AT_LEAST_ONE_SEP({
+      DEF: () => {
+        this.OR([{ ALT: () => this.CONSUME(Lexer.Text) }])
+        this.CONSUME(Lexer.Colon)
+        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+      },
+      SEP: Lexer.Comma,
+    })
   })
 
   public heading = this.RULE('heading', () => {
     this.CONSUME(Lexer.Heading)
     this.CONSUME(Lexer.OParentheses)
-    this.OPTION(() => this.SUBRULE(this.renderElementArgs, { ARGS: [Lexer.Size, Lexer.Text] }))
+    this.OPTION(() => this.SUBRULE(this.headingArgs))
     this.CONSUME(Lexer.CParentheses)
+  })
+
+  public headingArgs = this.RULE('headingArgs', () => {
+    this.AT_LEAST_ONE_SEP({
+      DEF: () => {
+        this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }])
+        this.CONSUME(Lexer.Colon)
+        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+      },
+      SEP: Lexer.Comma,
+    })
   })
 
   public table = this.RULE('table', () => {
     this.CONSUME(Lexer.Table)
     this.CONSUME(Lexer.OParentheses)
-    this.OPTION(() => this.SUBRULE(this.renderElementArgs, { ARGS: [Lexer.Header, Lexer.Data] }))
+    this.OPTION(() => this.SUBRULE(this.tableArgs))
     this.CONSUME(Lexer.CParentheses)
+  })
+
+  public tableArgs = this.RULE('tableArgs', () => {
+    this.AT_LEAST_ONE_SEP({
+      DEF: () => {
+        this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Data) }])
+        this.CONSUME(Lexer.Colon)
+        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+      },
+      SEP: Lexer.Comma,
+    })
   })
 
   public image = this.RULE('image', () => {
     this.CONSUME(Lexer.Image)
     this.CONSUME(Lexer.OParentheses)
-    this.OPTION(() => this.SUBRULE(this.renderElementArgs, { ARGS: [Lexer.Source] }))
+    this.OPTION(() => this.SUBRULE(this.imageArgs))
     this.CONSUME(Lexer.CParentheses)
+  })
+
+  public imageArgs = this.RULE('imageArgs', () => {
+    this.AT_LEAST_ONE_SEP({
+      DEF: () => {
+        this.OR([{ ALT: () => this.CONSUME(Lexer.Source) }, { ALT: () => this.CONSUME(Lexer.Data) }])
+        this.CONSUME(Lexer.Colon)
+        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+      },
+      SEP: Lexer.Comma,
+    })
   })
 
   public card = this.RULE('card', () => {
     this.CONSUME(Lexer.Card)
     this.CONSUME(Lexer.OParentheses)
-    this.OPTION(() => this.SUBRULE(this.renderElementArgs, { ARGS: [Lexer.Header, Lexer.Footer] }))
+    this.OPTION(() => this.SUBRULE(this.cardArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
+  })
+
+  public cardArgs = this.RULE('cardArgs', () => {
+    this.AT_LEAST_ONE_SEP({
+      DEF: () => {
+        this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Footer) }])
+        this.CONSUME(Lexer.Colon)
+        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+      },
+      SEP: Lexer.Comma,
+    })
   })
 
   public layout = this.RULE('layout', () => {
     this.CONSUME(Lexer.Layout)
     this.CONSUME(Lexer.OParentheses)
-    this.OPTION(() => this.SUBRULE(this.renderElementArgs, { ARGS: [Lexer.Padding, Lexer.Grid, Lexer.Gap] }))
+    this.OPTION(() => this.SUBRULE(this.layoutArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
+  })
+
+  public layoutArgs = this.RULE('layoutArgs', () => {
+    this.AT_LEAST_ONE_SEP({
+      DEF: () => {
+        this.OR([
+          { ALT: () => this.CONSUME(Lexer.Padding) },
+          { ALT: () => this.CONSUME(Lexer.Grid) },
+          { ALT: () => this.CONSUME(Lexer.Gap) },
+        ])
+        this.CONSUME(Lexer.Colon)
+        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+      },
+      SEP: Lexer.Comma,
+    })
   })
 }
 
