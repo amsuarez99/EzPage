@@ -7,10 +7,13 @@ export const Id = createToken({ name: 'Id', pattern: /[a-zA-Z]\w*/ })
 
 // Constants
 // ? Is Char necessary for our language
-export const cInt = createToken({ name: 'cInt', pattern: /\d+/ })
-export const cFloat = createToken({ name: 'cFloat', pattern: /\d+\.\d+/ })
-export const cString = createToken({ name: 'cString', pattern: /"(:?[^\\"]|\\(:?[bfnrtv"\\/]|u[0-9a-fA-F]{4}))*"/ })
-export const cBool = createToken({ name: 'cBool', pattern: /true|false/ })
+export const IntLiteral = createToken({ name: 'IntLiteral', pattern: /\d+/ })
+export const FloatLiteral = createToken({ name: 'FloatLiteral', pattern: /\d+\.\d+/ })
+export const StringLiteral = createToken({
+  name: 'StringLiteral',
+  pattern: /"(:?[^\\"]|\\(:?[bfnrtv"\\/]|u[0-9a-fA-F]{4}))*"/,
+})
+export const BoolLiteral = createToken({ name: 'BoolLiteral', pattern: /true|false/ })
 
 // Misc
 export const Colon = createToken({ name: 'Colon', pattern: /:/, label: ':' })
@@ -162,10 +165,10 @@ export const tokens = [
   WhiteSpace,
   Comma,
   To,
-  cString,
-  cFloat,
-  cInt,
-  cBool,
+  StringLiteral,
+  FloatLiteral,
+  IntLiteral,
+  BoolLiteral,
   Colon,
   LCurly,
   RCurly,

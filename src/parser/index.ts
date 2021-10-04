@@ -1,4 +1,4 @@
-import { CstParser, TokenType } from 'chevrotain'
+import { CstParser } from 'chevrotain'
 import * as Lexer from '..'
 
 class EzParser extends CstParser {
@@ -14,46 +14,53 @@ class EzParser extends CstParser {
       // Look ahead one token to see if render (our main method) is ahead
       GATE: () => this.LA(1).tokenType !== Lexer.Render,
       DEF: () => {
-        this.OR([
-          { ALT: () => this.SUBRULE(this.func) },
-          {
-            ALT: () => this.SUBRULE(this.vars),
-          },
-        ])
+        this.OR([{ ALT: () => this.SUBRULE(this.func) }, { ALT: () => this.SUBRULE(this.globalVariables) }])
       },
     })
     this.SUBRULE(this.render)
   })
 
-  public vars = this.RULE('vars', () => {
+  public constantArrayIndexation = this.RULE('constantArrayIndexation', () => {
+    this.CONSUME(Lexer.LBracket)
+    this.CONSUME(Lexer.IntLiteral)
+    this.CONSUME(Lexer.RBracket)
+  })
+
+  // global variables should be different because they have to be declared constantly
+  public globalVariables = this.RULE('globalVariables', () => {
     this.SUBRULE(this.type)
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
         this.CONSUME(Lexer.Id)
-        this.OPTION(() => {
-          this.CONSUME(Lexer.LBracket)
-          this.CONSUME(Lexer.cInt)
-          this.CONSUME(Lexer.RBracket)
-        })
-        this.OPTION1(() => {
-          this.CONSUME1(Lexer.LBracket)
-          this.CONSUME1(Lexer.cInt)
-          this.CONSUME1(Lexer.RBracket)
-        })
+        // Optional indexing
+        this.OPTION(() => this.SUBRULE(this.constantArrayIndexation))
+        this.OPTION1(() => this.SUBRULE1(this.constantArrayIndexation))
+        // Optional Initialization
         this.OPTION2(() => {
           this.CONSUME(Lexer.Equals)
-          this.OR([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.array) }])
+          this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.constantArray) }])
         })
       },
       SEP: Lexer.Comma,
     })
   })
 
+  public constantArray = this.RULE('constantArray', () => {
+    this.CONSUME1(Lexer.LBracket)
+    this.AT_LEAST_ONE_SEP({
+      DEF: () => {
+        this.OR([{ ALT: () => this.SUBRULE(this.literal) }])
+      },
+      SEP: Lexer.Comma,
+    })
+    this.CONSUME1(Lexer.RBracket)
+  })
+
   public array = this.RULE('array', () => {
     this.CONSUME1(Lexer.LBracket)
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
       },
       SEP: Lexer.Comma,
     })
@@ -87,37 +94,33 @@ class EzParser extends CstParser {
 
   public type = this.RULE('type', () => {
     this.OR([
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.Int)
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.Float)
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.Char)
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.Bool)
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.StringType)
-        },
-      },
+      { ALT: () => this.CONSUME(Lexer.Int) },
+      { ALT: () => this.CONSUME(Lexer.Float) },
+      { ALT: () => this.CONSUME(Lexer.Char) },
+      { ALT: () => this.CONSUME(Lexer.Bool) },
+      { ALT: () => this.CONSUME(Lexer.StringType) },
     ])
+  })
+
+  public localVariables = this.RULE('localVariables', () => {
+    this.SUBRULE(this.type)
+    this.AT_LEAST_ONE_SEP({
+      DEF: () => {
+        this.CONSUME(Lexer.Id)
+        this.OPTION(() => this.arrayIndexation)
+        this.OPTION1(() => this.arrayIndexation)
+        this.OPTION2(() => {
+          this.CONSUME(Lexer.Equals)
+          this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.array) }])
+        })
+      },
+      SEP: Lexer.Comma,
+    })
   })
 
   public statement = this.RULE('statement', () => {
     this.OR([
-      { ALT: () => this.SUBRULE(this.vars) },
+      { ALT: () => this.SUBRULE(this.localVariables) },
       { ALT: () => this.SUBRULE(this.assignment) },
       { ALT: () => this.SUBRULE(this.funcCall) },
       { ALT: () => this.SUBRULE(this.ifStatement) },
@@ -130,54 +133,36 @@ class EzParser extends CstParser {
 
   // ? Renombrar a constante
   // TODO: CREO QUE FALTA CONSTANTE CHAR
-  public constantVar = this.RULE('constantVar', () => {
+  public literal = this.RULE('literal', () => {
     this.OR([
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.cInt)
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.cFloat)
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.cString)
-        },
-      },
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.cBool)
-        },
-      },
+      { ALT: () => this.CONSUME(Lexer.IntLiteral) },
+      { ALT: () => this.CONSUME(Lexer.FloatLiteral) },
+      { ALT: () => this.CONSUME(Lexer.StringLiteral) },
+      { ALT: () => this.CONSUME(Lexer.BoolLiteral) },
     ])
   })
 
   // table(someId: someId)
   //
+  public arrayIndexation = this.RULE('arrayIndexation', () => {
+    this.CONSUME(Lexer.LBracket)
+    this.SUBRULE(this.expression)
+    this.CONSUME(Lexer.RBracket)
+  })
+
   public variable = this.RULE('variable', () => {
     this.CONSUME(Lexer.Id)
-    this.OPTION(() => {
-      this.CONSUME(Lexer.LBracket)
-      this.SUBRULE(this.baseExp)
-      this.CONSUME(Lexer.RBracket)
-    })
-    this.OPTION1(() => {
-      this.CONSUME1(Lexer.LBracket)
-      this.SUBRULE1(this.baseExp)
-      this.CONSUME1(Lexer.RBracket)
-    })
+    this.OPTION(() => this.SUBRULE(this.arrayIndexation))
+    this.OPTION1(() => this.SUBRULE1(this.arrayIndexation))
   })
 
   public assignment = this.RULE('assignment', () => {
     this.SUBRULE(this.variable)
     this.CONSUME(Lexer.Equals)
-    this.SUBRULE(this.baseExp)
+    this.SUBRULE(this.expression)
   })
 
-  public baseExp = this.RULE('baseExp', () => {
+  public expression = this.RULE('expression', () => {
     this.AT_LEAST_ONE_SEP({
       SEP: Lexer.OR,
       DEF: () => {
@@ -190,12 +175,12 @@ class EzParser extends CstParser {
     this.AT_LEAST_ONE_SEP({
       SEP: Lexer.AND,
       DEF: () => {
-        this.SUBRULE(this.equalityExp)
+        this.SUBRULE(this.equalityExpression)
       },
     })
   })
 
-  public equalityExp = this.RULE('equalityExp', () => {
+  public equalityExpression = this.RULE('equalityExpression', () => {
     this.SUBRULE(this.comparisonExp)
     this.OPTION(() => {
       this.OR([{ ALT: () => this.CONSUME(Lexer.IsEqual) }, { ALT: () => this.CONSUME(Lexer.IsNotEqual) }])
@@ -204,7 +189,7 @@ class EzParser extends CstParser {
   })
 
   public comparisonExp = this.RULE('comparisonExp', () => {
-    this.SUBRULE(this.plusminusExp)
+    this.SUBRULE(this.additiveExpression)
     this.OPTION(() => {
       this.OR([
         { ALT: () => this.CONSUME(Lexer.GT) },
@@ -212,37 +197,37 @@ class EzParser extends CstParser {
         { ALT: () => this.CONSUME(Lexer.GTE) },
         { ALT: () => this.CONSUME(Lexer.LTE) },
       ])
-      this.SUBRULE1(this.plusminusExp)
+      this.SUBRULE1(this.additiveExpression)
     })
   })
 
-  public plusminusExp = this.RULE('plusminusExp', () => {
-    this.SUBRULE(this.termExp)
+  public additiveExpression = this.RULE('additiveExpression', () => {
+    this.SUBRULE(this.multiplicativeExpression)
     this.OPTION(() => {
       this.OR([{ ALT: () => this.CONSUME(Lexer.Plus) }, { ALT: () => this.CONSUME(Lexer.Minus) }])
-      this.SUBRULE(this.plusminusExp)
+      this.SUBRULE(this.additiveExpression)
     })
   })
 
-  public termExp = this.RULE('termExp', () => {
-    this.SUBRULE(this.factorExp)
+  public multiplicativeExpression = this.RULE('multiplicativeExpression', () => {
+    this.SUBRULE(this.atomicExpression)
     this.OPTION(() => {
       this.OR([{ ALT: () => this.CONSUME(Lexer.Times) }, { ALT: () => this.CONSUME(Lexer.Divide) }])
-      this.SUBRULE(this.termExp)
+      this.SUBRULE(this.multiplicativeExpression)
     })
   })
 
-  public factorExp = this.RULE('factorExp', () => {
+  public parenthesizedExpression = this.RULE('parenthesizedExpression', () => {
+    this.CONSUME(Lexer.OParentheses)
+    this.SUBRULE(this.expression)
+    this.CONSUME(Lexer.CParentheses)
+  })
+
+  public atomicExpression = this.RULE('atomicExpression', () => {
     this.OPTION(() => this.CONSUME(Lexer.Minus))
     this.OR([
-      {
-        ALT: () => {
-          this.CONSUME(Lexer.OParentheses)
-          this.SUBRULE(this.baseExp)
-          this.CONSUME(Lexer.CParentheses)
-        },
-      },
-      { ALT: () => this.SUBRULE(this.constantVar) },
+      { ALT: () => this.SUBRULE(this.parenthesizedExpression) },
+      { ALT: () => this.SUBRULE(this.literal) },
       { ALT: () => this.SUBRULE(this.funcCall) },
       { ALT: () => this.SUBRULE(this.variable) },
     ])
@@ -253,18 +238,14 @@ class EzParser extends CstParser {
     this.CONSUME(Lexer.OParentheses)
     this.MANY_SEP({
       SEP: Lexer.Comma,
-      DEF: () => {
-        this.SUBRULE(this.baseExp)
-      },
+      DEF: () => this.SUBRULE(this.expression),
     })
     this.CONSUME(Lexer.CParentheses)
   })
 
   public ifStatement = this.RULE('ifStatement', () => {
     this.CONSUME(Lexer.If)
-    this.CONSUME(Lexer.OParentheses)
-    this.SUBRULE(this.baseExp)
-    this.CONSUME(Lexer.CParentheses)
+    this.SUBRULE(this.parenthesizedExpression)
     this.SUBRULE(this.block)
     this.OPTION(() => {
       this.CONSUME(Lexer.Else)
@@ -274,9 +255,7 @@ class EzParser extends CstParser {
 
   public whileLoop = this.RULE('whileLoop', () => {
     this.CONSUME(Lexer.While)
-    this.CONSUME(Lexer.OParentheses)
-    this.SUBRULE(this.baseExp)
-    this.CONSUME(Lexer.CParentheses)
+    this.SUBRULE(this.parenthesizedExpression)
     this.SUBRULE(this.block)
   })
 
@@ -285,12 +264,12 @@ class EzParser extends CstParser {
     this.CONSUME(Lexer.OParentheses)
     this.CONSUME(Lexer.Id)
     this.CONSUME(Lexer.Equals)
-    this.SUBRULE(this.baseExp)
+    this.SUBRULE(this.expression)
     this.CONSUME(Lexer.To)
-    this.SUBRULE1(this.baseExp)
+    this.SUBRULE1(this.expression)
     this.OPTION(() => {
       this.CONSUME(Lexer.Step)
-      this.SUBRULE2(this.baseExp)
+      this.SUBRULE2(this.expression)
     })
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.block)
@@ -298,7 +277,7 @@ class EzParser extends CstParser {
 
   public return = this.RULE('return', () => {
     this.CONSUME(Lexer.Return)
-    this.OPTION(() => this.SUBRULE(this.baseExp))
+    this.OPTION(() => this.SUBRULE(this.expression))
   })
 
   public print = this.RULE('print', () => {
@@ -306,9 +285,7 @@ class EzParser extends CstParser {
     this.CONSUME(Lexer.OParentheses)
     this.MANY_SEP({
       SEP: Lexer.Comma,
-      DEF: () => {
-        this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.constantVar) }])
-      },
+      DEF: () => this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.literal) }]),
     })
     this.CONSUME(Lexer.CParentheses)
   })
@@ -331,41 +308,13 @@ class EzParser extends CstParser {
 
   public renderStatement = this.RULE('renderStatement', () => {
     this.OR([
-      {
-        ALT: () => {
-          this.SUBRULE(this.container)
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE(this.heading)
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE(this.paragraph)
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE(this.table)
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE(this.image)
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE(this.card)
-        },
-      },
-      {
-        ALT: () => {
-          this.SUBRULE(this.layout)
-        },
-      },
+      { ALT: () => this.SUBRULE(this.container) },
+      { ALT: () => this.SUBRULE(this.heading) },
+      { ALT: () => this.SUBRULE(this.paragraph) },
+      { ALT: () => this.SUBRULE(this.table) },
+      { ALT: () => this.SUBRULE(this.image) },
+      { ALT: () => this.SUBRULE(this.card) },
+      { ALT: () => this.SUBRULE(this.layout) },
     ])
   })
 
@@ -387,7 +336,7 @@ class EzParser extends CstParser {
           { ALT: () => this.CONSUME(Lexer.Position) },
         ])
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
       },
       SEP: Lexer.Comma,
     })
@@ -405,7 +354,7 @@ class EzParser extends CstParser {
       DEF: () => {
         this.OR([{ ALT: () => this.CONSUME(Lexer.Text) }])
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
       },
       SEP: Lexer.Comma,
     })
@@ -423,7 +372,7 @@ class EzParser extends CstParser {
       DEF: () => {
         this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }])
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
       },
       SEP: Lexer.Comma,
     })
@@ -441,7 +390,7 @@ class EzParser extends CstParser {
       DEF: () => {
         this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Data) }])
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
       },
       SEP: Lexer.Comma,
     })
@@ -459,7 +408,7 @@ class EzParser extends CstParser {
       DEF: () => {
         this.OR([{ ALT: () => this.CONSUME(Lexer.Source) }, { ALT: () => this.CONSUME(Lexer.Data) }])
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
       },
       SEP: Lexer.Comma,
     })
@@ -478,7 +427,7 @@ class EzParser extends CstParser {
       DEF: () => {
         this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Footer) }])
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
       },
       SEP: Lexer.Comma,
     })
@@ -501,7 +450,7 @@ class EzParser extends CstParser {
           { ALT: () => this.CONSUME(Lexer.Gap) },
         ])
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.constantVar) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
       },
       SEP: Lexer.Comma,
     })

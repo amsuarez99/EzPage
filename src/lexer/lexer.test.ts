@@ -1,4 +1,4 @@
-import { EzLexer, Id, cString, cInt, cFloat, cBool, tokensMap } from '.'
+import { EzLexer, Id, StringLiteral, IntLiteral, FloatLiteral, BoolLiteral, tokensMap } from '.'
 
 it('recognizes ids', () => {
   // Series of ids
@@ -11,25 +11,25 @@ describe('recognizes constants', () => {
   it('recognizes strings', () => {
     const input = `"I am a string" "I'm a string too" "We are strings!" "Funky characters: ''''''$$$/"`
     const lexingRes = EzLexer.tokenize(input)
-    lexingRes.tokens.forEach((token) => expect(token.tokenType).toBe(cString))
+    lexingRes.tokens.forEach((token) => expect(token.tokenType).toBe(StringLiteral))
   })
 
   it('recognizes integers', () => {
     const input = `0 1 2 3 4 5 6 7 8 9 10 11 12 13 100000000000000000000`
     const lexingRes = EzLexer.tokenize(input)
-    lexingRes.tokens.forEach((token) => expect(token.tokenType).toBe(cInt))
+    lexingRes.tokens.forEach((token) => expect(token.tokenType).toBe(IntLiteral))
   })
 
   it('recognizes floats', () => {
     const input = `1.1 2.2 3.3 4.4 5.5 6.6 7.7 8.989387 9.9 10.1000000000000000`
     const lexingRes = EzLexer.tokenize(input)
-    lexingRes.tokens.forEach((token) => expect(token.tokenType).toBe(cFloat))
+    lexingRes.tokens.forEach((token) => expect(token.tokenType).toBe(FloatLiteral))
   })
 
   it('recognizes booleans', () => {
     const input = `true false`
     const lexingRes = EzLexer.tokenize(input)
-    lexingRes.tokens.forEach((token) => expect(token.tokenType).toBe(cBool))
+    lexingRes.tokens.forEach((token) => expect(token.tokenType).toBe(BoolLiteral))
   })
 })
 
