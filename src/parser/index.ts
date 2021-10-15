@@ -20,11 +20,6 @@ class EzParser extends CstParser {
     this.SUBRULE(this.render)
   })
 
-  public constantArrayIndexation = this.RULE('constantArrayIndexation', () => {
-    this.CONSUME(Lexer.LBracket)
-    this.CONSUME(Lexer.IntLiteral)
-    this.CONSUME(Lexer.RBracket)
-  })
 
   // global variables should be different because they have to be declared constantly
   public globalVariables = this.RULE('globalVariables', () => {
@@ -43,6 +38,12 @@ class EzParser extends CstParser {
       },
       SEP: Lexer.Comma,
     })
+  })
+
+  public constantArrayIndexation = this.RULE('constantArrayIndexation', () => {
+    this.CONSUME(Lexer.LBracket)
+    this.CONSUME(Lexer.IntLiteral)
+    this.CONSUME(Lexer.RBracket)
   })
 
   public constantArray = this.RULE('constantArray', () => {
@@ -107,8 +108,8 @@ class EzParser extends CstParser {
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
         this.CONSUME(Lexer.Id)
-        this.OPTION(() => this.arrayIndexation)
-        this.OPTION1(() => this.arrayIndexation)
+        this.OPTION(() => this.SUBRULE(this.arrayIndexation))
+        this.OPTION1(() => this.SUBRULE1(this.arrayIndexation))
         this.OPTION2(() => {
           this.CONSUME(Lexer.Equals)
           this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.array) }])

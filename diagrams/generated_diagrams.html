@@ -80,34 +80,6 @@
   },
   {
     "type": "Rule",
-    "name": "constantArrayIndexation",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Terminal",
-        "name": "LBracket",
-        "label": "[",
-        "idx": 0,
-        "pattern": "\\["
-      },
-      {
-        "type": "Terminal",
-        "name": "IntLiteral",
-        "label": "IntLiteral",
-        "idx": 0,
-        "pattern": "\\d+"
-      },
-      {
-        "type": "Terminal",
-        "name": "RBracket",
-        "label": "]",
-        "idx": 0,
-        "pattern": "]"
-      }
-    ]
-  },
-  {
-    "type": "Rule",
     "name": "globalVariables",
     "orgText": "",
     "definition": [
@@ -196,6 +168,34 @@
             ]
           }
         ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "constantArrayIndexation",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "LBracket",
+        "label": "[",
+        "idx": 0,
+        "pattern": "\\["
+      },
+      {
+        "type": "Terminal",
+        "name": "IntLiteral",
+        "label": "IntLiteral",
+        "idx": 0,
+        "pattern": "\\d+"
+      },
+      {
+        "type": "Terminal",
+        "name": "RBracket",
+        "label": "]",
+        "idx": 0,
+        "pattern": "]"
       }
     ]
   },
@@ -549,12 +549,24 @@
           {
             "type": "Option",
             "idx": 0,
-            "definition": []
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "arrayIndexation",
+                "idx": 0
+              }
+            ]
           },
           {
             "type": "Option",
             "idx": 1,
-            "definition": []
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "arrayIndexation",
+                "idx": 1
+              }
+            ]
           },
           {
             "type": "Option",
