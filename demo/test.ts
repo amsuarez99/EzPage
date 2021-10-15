@@ -1,5 +1,6 @@
 import EzParser from '../src/parser'
 import * as Lexer from '../src/lexer'
+import { toAst } from '../src/semantics/cstVisitor'
 import fs from 'fs'
 import path from 'path'
 
@@ -21,7 +22,7 @@ function parseInput(text: string) {
 try {
   // read contents of the file
   const data = fs.readFileSync(path.resolve(__dirname, '../inputs/normal.txt'), { encoding: 'utf-8' })
-  parseInput(data)
+  toAst(data)
 } catch (err) {
   console.error(err)
 }

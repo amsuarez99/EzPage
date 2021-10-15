@@ -18,3 +18,11 @@ For the first checkpoint:
 
 - We created a Lexer that identifies all of the specified tokens
 - We created the parser that check the order of the specified tokens to verify the correct syntax
+
+
+## Checkpoint 2
+
+For this second checkpoint: 
+
+- We defined and implemented our semantic cube with all rules on operators and types.
+- We defined and created our function tables and the variable tables implemented in TS.
