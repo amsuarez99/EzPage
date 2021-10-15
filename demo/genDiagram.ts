@@ -26,7 +26,7 @@ function genDiagram(text: string) {
   }
 }
 
-const p = genDiagram('test')
+const p = genDiagram('page something')
 
 // extract the serialized grammar.
 const parserInstance = p.parseInstance
@@ -36,5 +36,5 @@ const serializedGrammar = parserInstance.getSerializedGastProductions()
 const htmlText = chevrotain.createSyntaxDiagramsCode(serializedGrammar)
 
 // Write the HTML file to disk
-const outPath = path.resolve(__dirname, '../diagrams/generated_diagrams.html')
+const outPath = path.resolve(__dirname, '../diagrams/generated_diagram.html')
 fs.writeFileSync(outPath, htmlText)
