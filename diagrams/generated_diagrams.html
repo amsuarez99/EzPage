@@ -62,7 +62,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "vars",
+                    "name": "globalVariables",
                     "idx": 0
                   }
                 ]
@@ -80,7 +80,35 @@
   },
   {
     "type": "Rule",
-    "name": "vars",
+    "name": "constantArrayIndexation",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "LBracket",
+        "label": "[",
+        "idx": 0,
+        "pattern": "\\["
+      },
+      {
+        "type": "Terminal",
+        "name": "IntLiteral",
+        "label": "IntLiteral",
+        "idx": 0,
+        "pattern": "\\d+"
+      },
+      {
+        "type": "Terminal",
+        "name": "RBracket",
+        "label": "]",
+        "idx": 0,
+        "pattern": "]"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "globalVariables",
     "orgText": "",
     "definition": [
       {
@@ -103,13 +131,42 @@
             "type": "Terminal",
             "name": "Id",
             "label": "Id",
-            "idx": 1,
+            "idx": 0,
             "pattern": "[a-zA-Z]\\w*"
           },
           {
             "type": "Option",
             "idx": 0,
             "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "constantArrayIndexation",
+                "idx": 0
+              }
+            ]
+          },
+          {
+            "type": "Option",
+            "idx": 1,
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "constantArrayIndexation",
+                "idx": 1
+              }
+            ]
+          },
+          {
+            "type": "Option",
+            "idx": 2,
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Equals",
+                "label": "=",
+                "idx": 0,
+                "pattern": "="
+              },
               {
                 "type": "Alternation",
                 "idx": 0,
@@ -119,7 +176,7 @@
                     "definition": [
                       {
                         "type": "NonTerminal",
-                        "name": "simpleVars",
+                        "name": "literal",
                         "idx": 0
                       }
                     ]
@@ -129,7 +186,7 @@
                     "definition": [
                       {
                         "type": "NonTerminal",
-                        "name": "arrayVars",
+                        "name": "constantArray",
                         "idx": 0
                       }
                     ]
@@ -144,93 +201,111 @@
   },
   {
     "type": "Rule",
-    "name": "simpleVars",
-    "orgText": "",
-    "definition": [
-      {
-        "type": "Terminal",
-        "name": "Equals",
-        "label": "=",
-        "idx": 0,
-        "pattern": "="
-      },
-      {
-        "type": "NonTerminal",
-        "name": "baseExp",
-        "idx": 0
-      }
-    ]
-  },
-  {
-    "type": "Rule",
-    "name": "arrayVars",
+    "name": "constantArray",
     "orgText": "",
     "definition": [
       {
         "type": "Terminal",
         "name": "LBracket",
         "label": "[",
-        "idx": 0,
+        "idx": 1,
         "pattern": "\\["
       },
       {
-        "type": "Terminal",
-        "name": "cInt",
-        "label": "cInt",
+        "type": "RepetitionMandatoryWithSeparator",
         "idx": 0,
-        "pattern": "\\d+"
+        "separator": {
+          "type": "Terminal",
+          "name": "Comma",
+          "label": ",",
+          "idx": 1,
+          "pattern": ","
+        },
+        "definition": [
+          {
+            "type": "Alternation",
+            "idx": 0,
+            "definition": [
+              {
+                "type": "Alternative",
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "literal",
+                    "idx": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       {
         "type": "Terminal",
         "name": "RBracket",
         "label": "]",
-        "idx": 0,
+        "idx": 1,
         "pattern": "]"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "array",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "LBracket",
+        "label": "[",
+        "idx": 1,
+        "pattern": "\\["
       },
       {
-        "type": "Option",
+        "type": "RepetitionMandatoryWithSeparator",
         "idx": 0,
+        "separator": {
+          "type": "Terminal",
+          "name": "Comma",
+          "label": ",",
+          "idx": 1,
+          "pattern": ","
+        },
         "definition": [
           {
-            "type": "Terminal",
-            "name": "Equals",
-            "label": "=",
+            "type": "Alternation",
             "idx": 0,
-            "pattern": "="
-          },
-          {
-            "type": "Terminal",
-            "name": "LBracket",
-            "label": "[",
-            "idx": 1,
-            "pattern": "\\["
-          },
-          {
-            "type": "RepetitionMandatoryWithSeparator",
-            "idx": 0,
-            "separator": {
-              "type": "Terminal",
-              "name": "Comma",
-              "label": ",",
-              "idx": 1,
-              "pattern": ","
-            },
             "definition": [
               {
-                "type": "NonTerminal",
-                "name": "constantVars",
-                "idx": 0
+                "type": "Alternative",
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "literal",
+                    "idx": 0
+                  }
+                ]
+              },
+              {
+                "type": "Alternative",
+                "definition": [
+                  {
+                    "type": "NonTerminal",
+                    "name": "variable",
+                    "idx": 0
+                  }
+                ]
               }
             ]
-          },
-          {
-            "type": "Terminal",
-            "name": "RBracket",
-            "label": "]",
-            "idx": 1,
-            "pattern": "]"
           }
         ]
+      },
+      {
+        "type": "Terminal",
+        "name": "RBracket",
+        "label": "]",
+        "idx": 1,
+        "pattern": "]"
       }
     ]
   },
@@ -445,6 +520,87 @@
   },
   {
     "type": "Rule",
+    "name": "localVariables",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "NonTerminal",
+        "name": "type",
+        "idx": 0
+      },
+      {
+        "type": "RepetitionMandatoryWithSeparator",
+        "idx": 0,
+        "separator": {
+          "type": "Terminal",
+          "name": "Comma",
+          "label": ",",
+          "idx": 1,
+          "pattern": ","
+        },
+        "definition": [
+          {
+            "type": "Terminal",
+            "name": "Id",
+            "label": "Id",
+            "idx": 0,
+            "pattern": "[a-zA-Z]\\w*"
+          },
+          {
+            "type": "Option",
+            "idx": 0,
+            "definition": []
+          },
+          {
+            "type": "Option",
+            "idx": 1,
+            "definition": []
+          },
+          {
+            "type": "Option",
+            "idx": 2,
+            "definition": [
+              {
+                "type": "Terminal",
+                "name": "Equals",
+                "label": "=",
+                "idx": 0,
+                "pattern": "="
+              },
+              {
+                "type": "Alternation",
+                "idx": 0,
+                "definition": [
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "NonTerminal",
+                        "name": "literal",
+                        "idx": 0
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Alternative",
+                    "definition": [
+                      {
+                        "type": "NonTerminal",
+                        "name": "array",
+                        "idx": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
     "name": "statement",
     "orgText": "",
     "definition": [
@@ -457,7 +613,7 @@
             "definition": [
               {
                 "type": "NonTerminal",
-                "name": "vars",
+                "name": "localVariables",
                 "idx": 0
               }
             ]
@@ -538,7 +694,7 @@
   },
   {
     "type": "Rule",
-    "name": "constantVars",
+    "name": "literal",
     "orgText": "",
     "definition": [
       {
@@ -550,8 +706,8 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "cInt",
-                "label": "cInt",
+                "name": "IntLiteral",
+                "label": "IntLiteral",
                 "idx": 0,
                 "pattern": "\\d+"
               }
@@ -562,8 +718,8 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "cFloat",
-                "label": "cFloat",
+                "name": "FloatLiteral",
+                "label": "FloatLiteral",
                 "idx": 0,
                 "pattern": "\\d+\\.\\d+"
               }
@@ -574,8 +730,8 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "cString",
-                "label": "cString",
+                "name": "StringLiteral",
+                "label": "StringLiteral",
                 "idx": 0,
                 "pattern": "\"(:?[^\\\\\"]|\\\\(:?[bfnrtv\"\\\\/]|u[0-9a-fA-F]{4}))*\""
               }
@@ -586,14 +742,40 @@
             "definition": [
               {
                 "type": "Terminal",
-                "name": "cBool",
-                "label": "cBool",
+                "name": "BoolLiteral",
+                "label": "BoolLiteral",
                 "idx": 0,
                 "pattern": "true|false"
               }
             ]
           }
         ]
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "arrayIndexation",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "LBracket",
+        "label": "[",
+        "idx": 0,
+        "pattern": "\\["
+      },
+      {
+        "type": "NonTerminal",
+        "name": "expression",
+        "idx": 0
+      },
+      {
+        "type": "Terminal",
+        "name": "RBracket",
+        "label": "]",
+        "idx": 0,
+        "pattern": "]"
       }
     ]
   },
@@ -614,23 +796,9 @@
         "idx": 0,
         "definition": [
           {
-            "type": "Terminal",
-            "name": "LBracket",
-            "label": "[",
-            "idx": 0,
-            "pattern": "\\["
-          },
-          {
             "type": "NonTerminal",
-            "name": "baseExp",
+            "name": "arrayIndexation",
             "idx": 0
-          },
-          {
-            "type": "Terminal",
-            "name": "RBracket",
-            "label": "]",
-            "idx": 0,
-            "pattern": "]"
           }
         ]
       },
@@ -639,23 +807,9 @@
         "idx": 1,
         "definition": [
           {
-            "type": "Terminal",
-            "name": "LBracket",
-            "label": "[",
-            "idx": 1,
-            "pattern": "\\["
-          },
-          {
             "type": "NonTerminal",
-            "name": "baseExp",
+            "name": "arrayIndexation",
             "idx": 1
-          },
-          {
-            "type": "Terminal",
-            "name": "RBracket",
-            "label": "]",
-            "idx": 1,
-            "pattern": "]"
           }
         ]
       }
@@ -680,14 +834,14 @@
       },
       {
         "type": "NonTerminal",
-        "name": "baseExp",
+        "name": "expression",
         "idx": 0
       }
     ]
   },
   {
     "type": "Rule",
-    "name": "baseExp",
+    "name": "expression",
     "orgText": "",
     "definition": [
       {
@@ -728,7 +882,7 @@
         "definition": [
           {
             "type": "NonTerminal",
-            "name": "equalityExp",
+            "name": "equalityExpression",
             "idx": 0
           }
         ]
@@ -737,7 +891,7 @@
   },
   {
     "type": "Rule",
-    "name": "equalityExp",
+    "name": "equalityExpression",
     "orgText": "",
     "definition": [
       {
@@ -795,7 +949,7 @@
     "definition": [
       {
         "type": "NonTerminal",
-        "name": "plusminusExp",
+        "name": "additiveExpression",
         "idx": 0
       },
       {
@@ -858,7 +1012,7 @@
           },
           {
             "type": "NonTerminal",
-            "name": "plusminusExp",
+            "name": "additiveExpression",
             "idx": 1
           }
         ]
@@ -867,12 +1021,12 @@
   },
   {
     "type": "Rule",
-    "name": "plusminusExp",
+    "name": "additiveExpression",
     "orgText": "",
     "definition": [
       {
         "type": "NonTerminal",
-        "name": "termExp",
+        "name": "multiplicativeExpression",
         "idx": 0
       },
       {
@@ -911,7 +1065,7 @@
           },
           {
             "type": "NonTerminal",
-            "name": "plusminusExp",
+            "name": "additiveExpression",
             "idx": 0
           }
         ]
@@ -920,12 +1074,12 @@
   },
   {
     "type": "Rule",
-    "name": "termExp",
+    "name": "multiplicativeExpression",
     "orgText": "",
     "definition": [
       {
         "type": "NonTerminal",
-        "name": "factorExp",
+        "name": "atomicExpression",
         "idx": 0
       },
       {
@@ -964,7 +1118,7 @@
           },
           {
             "type": "NonTerminal",
-            "name": "termExp",
+            "name": "multiplicativeExpression",
             "idx": 0
           }
         ]
@@ -973,7 +1127,33 @@
   },
   {
     "type": "Rule",
-    "name": "factorExp",
+    "name": "parenthesizedExpression",
+    "orgText": "",
+    "definition": [
+      {
+        "type": "Terminal",
+        "name": "OParentheses",
+        "label": "(",
+        "idx": 0,
+        "pattern": "\\("
+      },
+      {
+        "type": "NonTerminal",
+        "name": "expression",
+        "idx": 0
+      },
+      {
+        "type": "Terminal",
+        "name": "CParentheses",
+        "label": ")",
+        "idx": 0,
+        "pattern": "\\)"
+      }
+    ]
+  },
+  {
+    "type": "Rule",
+    "name": "atomicExpression",
     "orgText": "",
     "definition": [
       {
@@ -997,23 +1177,9 @@
             "type": "Alternative",
             "definition": [
               {
-                "type": "Terminal",
-                "name": "OParentheses",
-                "label": "(",
-                "idx": 0,
-                "pattern": "\\("
-              },
-              {
                 "type": "NonTerminal",
-                "name": "baseExp",
+                "name": "parenthesizedExpression",
                 "idx": 0
-              },
-              {
-                "type": "Terminal",
-                "name": "CParentheses",
-                "label": ")",
-                "idx": 0,
-                "pattern": "\\)"
               }
             ]
           },
@@ -1022,7 +1188,7 @@
             "definition": [
               {
                 "type": "NonTerminal",
-                "name": "constantVars",
+                "name": "literal",
                 "idx": 0
               }
             ]
@@ -1083,7 +1249,7 @@
         "definition": [
           {
             "type": "NonTerminal",
-            "name": "baseExp",
+            "name": "expression",
             "idx": 0
           }
         ]
@@ -1110,23 +1276,9 @@
         "pattern": "if"
       },
       {
-        "type": "Terminal",
-        "name": "OParentheses",
-        "label": "(",
-        "idx": 0,
-        "pattern": "\\("
-      },
-      {
         "type": "NonTerminal",
-        "name": "baseExp",
+        "name": "parenthesizedExpression",
         "idx": 0
-      },
-      {
-        "type": "Terminal",
-        "name": "CParentheses",
-        "label": ")",
-        "idx": 0,
-        "pattern": "\\)"
       },
       {
         "type": "NonTerminal",
@@ -1166,23 +1318,9 @@
         "pattern": "while"
       },
       {
-        "type": "Terminal",
-        "name": "OParentheses",
-        "label": "(",
-        "idx": 0,
-        "pattern": "\\("
-      },
-      {
         "type": "NonTerminal",
-        "name": "baseExp",
+        "name": "parenthesizedExpression",
         "idx": 0
-      },
-      {
-        "type": "Terminal",
-        "name": "CParentheses",
-        "label": ")",
-        "idx": 0,
-        "pattern": "\\)"
       },
       {
         "type": "NonTerminal",
@@ -1226,7 +1364,7 @@
       },
       {
         "type": "NonTerminal",
-        "name": "baseExp",
+        "name": "expression",
         "idx": 0
       },
       {
@@ -1238,7 +1376,7 @@
       },
       {
         "type": "NonTerminal",
-        "name": "baseExp",
+        "name": "expression",
         "idx": 1
       },
       {
@@ -1254,7 +1392,7 @@
           },
           {
             "type": "NonTerminal",
-            "name": "baseExp",
+            "name": "expression",
             "idx": 2
           }
         ]
@@ -1291,7 +1429,7 @@
         "definition": [
           {
             "type": "NonTerminal",
-            "name": "baseExp",
+            "name": "expression",
             "idx": 0
           }
         ]
@@ -1347,7 +1485,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "constantVars",
+                    "name": "literal",
                     "idx": 0
                   }
                 ]
@@ -1561,9 +1699,15 @@
         "pattern": "\\("
       },
       {
-        "type": "NonTerminal",
-        "name": "containerParams",
-        "idx": 0
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "containerArgs",
+            "idx": 0
+          }
+        ]
       },
       {
         "type": "Terminal",
@@ -1581,11 +1725,11 @@
   },
   {
     "type": "Rule",
-    "name": "containerParams",
+    "name": "containerArgs",
     "orgText": "",
     "definition": [
       {
-        "type": "RepetitionWithSeparator",
+        "type": "RepetitionMandatoryWithSeparator",
         "idx": 0,
         "separator": {
           "type": "Terminal",
@@ -1665,7 +1809,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "variable",
+                    "name": "literal",
                     "idx": 0
                   }
                 ]
@@ -1675,7 +1819,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "constantVars",
+                    "name": "variable",
                     "idx": 0
                   }
                 ]
@@ -1706,9 +1850,15 @@
         "pattern": "\\("
       },
       {
-        "type": "NonTerminal",
-        "name": "paragraphParams",
-        "idx": 0
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "paragraphArgs",
+            "idx": 0
+          }
+        ]
       },
       {
         "type": "Terminal",
@@ -1721,11 +1871,11 @@
   },
   {
     "type": "Rule",
-    "name": "paragraphParams",
+    "name": "paragraphArgs",
     "orgText": "",
     "definition": [
       {
-        "type": "RepetitionWithSeparator",
+        "type": "RepetitionMandatoryWithSeparator",
         "idx": 0,
         "separator": {
           "type": "Terminal",
@@ -1736,11 +1886,22 @@
         },
         "definition": [
           {
-            "type": "Terminal",
-            "name": "Text",
-            "label": "text",
+            "type": "Alternation",
             "idx": 0,
-            "pattern": "text"
+            "definition": [
+              {
+                "type": "Alternative",
+                "definition": [
+                  {
+                    "type": "Terminal",
+                    "name": "Text",
+                    "label": "text",
+                    "idx": 0,
+                    "pattern": "text"
+                  }
+                ]
+              }
+            ]
           },
           {
             "type": "Terminal",
@@ -1751,14 +1912,14 @@
           },
           {
             "type": "Alternation",
-            "idx": 0,
+            "idx": 1,
             "definition": [
               {
                 "type": "Alternative",
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "variable",
+                    "name": "literal",
                     "idx": 0
                   }
                 ]
@@ -1768,7 +1929,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "constantVars",
+                    "name": "variable",
                     "idx": 0
                   }
                 ]
@@ -1804,7 +1965,7 @@
         "definition": [
           {
             "type": "NonTerminal",
-            "name": "headingParams",
+            "name": "headingArgs",
             "idx": 0
           }
         ]
@@ -1820,7 +1981,7 @@
   },
   {
     "type": "Rule",
-    "name": "headingParams",
+    "name": "headingArgs",
     "orgText": "",
     "definition": [
       {
@@ -1880,7 +2041,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "variable",
+                    "name": "literal",
                     "idx": 0
                   }
                 ]
@@ -1890,7 +2051,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "constantVars",
+                    "name": "variable",
                     "idx": 0
                   }
                 ]
@@ -1926,7 +2087,7 @@
         "definition": [
           {
             "type": "NonTerminal",
-            "name": "tableParams",
+            "name": "tableArgs",
             "idx": 0
           }
         ]
@@ -1942,7 +2103,7 @@
   },
   {
     "type": "Rule",
-    "name": "tableParams",
+    "name": "tableArgs",
     "orgText": "",
     "definition": [
       {
@@ -2002,7 +2163,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "variable",
+                    "name": "literal",
                     "idx": 0
                   }
                 ]
@@ -2012,7 +2173,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "constantVars",
+                    "name": "variable",
                     "idx": 0
                   }
                 ]
@@ -2048,7 +2209,7 @@
         "definition": [
           {
             "type": "NonTerminal",
-            "name": "imageParams",
+            "name": "imageArgs",
             "idx": 0
           }
         ]
@@ -2064,7 +2225,7 @@
   },
   {
     "type": "Rule",
-    "name": "imageParams",
+    "name": "imageArgs",
     "orgText": "",
     "definition": [
       {
@@ -2079,11 +2240,34 @@
         },
         "definition": [
           {
-            "type": "Terminal",
-            "name": "Source",
-            "label": "source",
+            "type": "Alternation",
             "idx": 0,
-            "pattern": "source"
+            "definition": [
+              {
+                "type": "Alternative",
+                "definition": [
+                  {
+                    "type": "Terminal",
+                    "name": "Source",
+                    "label": "source",
+                    "idx": 0,
+                    "pattern": "source"
+                  }
+                ]
+              },
+              {
+                "type": "Alternative",
+                "definition": [
+                  {
+                    "type": "Terminal",
+                    "name": "Data",
+                    "label": "data",
+                    "idx": 0,
+                    "pattern": "data"
+                  }
+                ]
+              }
+            ]
           },
           {
             "type": "Terminal",
@@ -2094,14 +2278,14 @@
           },
           {
             "type": "Alternation",
-            "idx": 0,
+            "idx": 1,
             "definition": [
               {
                 "type": "Alternative",
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "variable",
+                    "name": "literal",
                     "idx": 0
                   }
                 ]
@@ -2111,7 +2295,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "constantVars",
+                    "name": "variable",
                     "idx": 0
                   }
                 ]
@@ -2142,9 +2326,15 @@
         "pattern": "\\("
       },
       {
-        "type": "NonTerminal",
-        "name": "cardParams",
-        "idx": 0
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "cardArgs",
+            "idx": 0
+          }
+        ]
       },
       {
         "type": "Terminal",
@@ -2162,11 +2352,11 @@
   },
   {
     "type": "Rule",
-    "name": "cardParams",
+    "name": "cardArgs",
     "orgText": "",
     "definition": [
       {
-        "type": "RepetitionWithSeparator",
+        "type": "RepetitionMandatoryWithSeparator",
         "idx": 0,
         "separator": {
           "type": "Terminal",
@@ -2222,7 +2412,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "variable",
+                    "name": "literal",
                     "idx": 0
                   }
                 ]
@@ -2232,7 +2422,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "constantVars",
+                    "name": "variable",
                     "idx": 0
                   }
                 ]
@@ -2263,9 +2453,15 @@
         "pattern": "\\("
       },
       {
-        "type": "NonTerminal",
-        "name": "layoutParams",
-        "idx": 0
+        "type": "Option",
+        "idx": 0,
+        "definition": [
+          {
+            "type": "NonTerminal",
+            "name": "layoutArgs",
+            "idx": 0
+          }
+        ]
       },
       {
         "type": "Terminal",
@@ -2283,11 +2479,11 @@
   },
   {
     "type": "Rule",
-    "name": "layoutParams",
+    "name": "layoutArgs",
     "orgText": "",
     "definition": [
       {
-        "type": "RepetitionWithSeparator",
+        "type": "RepetitionMandatoryWithSeparator",
         "idx": 0,
         "separator": {
           "type": "Terminal",
@@ -2355,7 +2551,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "variable",
+                    "name": "literal",
                     "idx": 0
                   }
                 ]
@@ -2365,7 +2561,7 @@
                 "definition": [
                   {
                     "type": "NonTerminal",
-                    "name": "constantVars",
+                    "name": "variable",
                     "idx": 0
                   }
                 ]
