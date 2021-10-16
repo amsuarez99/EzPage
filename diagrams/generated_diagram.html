@@ -9,12 +9,12 @@
 </style>
 
 
-<link rel='stylesheet' href='https://unpkg.com/chevrotain@9.0.2/diagrams/diagrams.css'>
+<link rel='stylesheet' href='https://unpkg.com/chevrotain@9.1.0/diagrams/diagrams.css'>
 
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/vendor/railroad-diagrams.js'></script>
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/src/diagrams_builder.js'></script>
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/src/diagrams_behavior.js'></script>
-<script src='https://unpkg.com/chevrotain@9.0.2/diagrams/src/main.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/vendor/railroad-diagrams.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/diagrams_builder.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/diagrams_behavior.js'></script>
+<script src='https://unpkg.com/chevrotain@9.1.0/diagrams/src/main.js'></script>
 
 <div id="diagrams" align="center"></div>    
 
@@ -549,12 +549,24 @@
           {
             "type": "Option",
             "idx": 0,
-            "definition": []
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "arrayIndexation",
+                "idx": 0
+              }
+            ]
           },
           {
             "type": "Option",
             "idx": 1,
-            "definition": []
+            "definition": [
+              {
+                "type": "NonTerminal",
+                "name": "arrayIndexation",
+                "idx": 1
+              }
+            ]
           },
           {
             "type": "Option",
@@ -845,20 +857,25 @@
     "orgText": "",
     "definition": [
       {
-        "type": "RepetitionMandatoryWithSeparator",
+        "type": "NonTerminal",
+        "name": "andExp",
+        "idx": 0
+      },
+      {
+        "type": "Option",
         "idx": 0,
-        "separator": {
-          "type": "Terminal",
-          "name": "OR",
-          "label": "||",
-          "idx": 1,
-          "pattern": "\\|\\|"
-        },
         "definition": [
+          {
+            "type": "Terminal",
+            "name": "OR",
+            "label": "||",
+            "idx": 0,
+            "pattern": "\\|\\|"
+          },
           {
             "type": "NonTerminal",
             "name": "andExp",
-            "idx": 0
+            "idx": 1
           }
         ]
       }
@@ -870,20 +887,25 @@
     "orgText": "",
     "definition": [
       {
-        "type": "RepetitionMandatoryWithSeparator",
+        "type": "NonTerminal",
+        "name": "equalityExpression",
+        "idx": 0
+      },
+      {
+        "type": "Option",
         "idx": 0,
-        "separator": {
-          "type": "Terminal",
-          "name": "AND",
-          "label": "&&",
-          "idx": 1,
-          "pattern": "&&"
-        },
         "definition": [
+          {
+            "type": "Terminal",
+            "name": "AND",
+            "label": "&&",
+            "idx": 0,
+            "pattern": "&&"
+          },
           {
             "type": "NonTerminal",
             "name": "equalityExpression",
-            "idx": 0
+            "idx": 1
           }
         ]
       }

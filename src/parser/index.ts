@@ -160,8 +160,8 @@ class EzParser extends CstParser {
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
         this.CONSUME(Lexer.Id)
-        this.OPTION(() => this.arrayIndexation)
-        this.OPTION1(() => this.arrayIndexation)
+        this.OPTION(() => this.SUBRULE(this.arrayIndexation))
+        this.OPTION1(() => this.SUBRULE1(this.arrayIndexation))
         this.OPTION2(() => {
           this.CONSUME(Lexer.Equals)
           this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.array) }])
@@ -195,8 +195,6 @@ class EzParser extends CstParser {
     ])
   })
 
-  // table(someId: someId)
-  //
   public arrayIndexation = this.RULE('arrayIndexation', () => {
     this.CONSUME(Lexer.LBracket)
     this.SUBRULE(this.expression)
@@ -216,20 +214,18 @@ class EzParser extends CstParser {
   })
 
   public expression = this.RULE('expression', () => {
-    this.AT_LEAST_ONE_SEP({
-      SEP: Lexer.OR,
-      DEF: () => {
-        this.SUBRULE(this.andExp)
-      },
+    this.SUBRULE(this.andExp)
+    this.OPTION(() => {
+      this.CONSUME(Lexer.OR)
+      this.SUBRULE1(this.andExp)
     })
   })
 
   public andExp = this.RULE('andExp', () => {
-    this.AT_LEAST_ONE_SEP({
-      SEP: Lexer.AND,
-      DEF: () => {
-        this.SUBRULE(this.equalityExpression)
-      },
+    this.SUBRULE(this.equalityExpression)
+    this.OPTION(() => {
+      this.CONSUME(Lexer.AND)
+      this.SUBRULE1(this.equalityExpression)
     })
   })
 
