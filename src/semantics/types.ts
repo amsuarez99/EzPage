@@ -26,12 +26,12 @@ export type FuncTable = Record<string, FuncTableEntry>
 // -----------------------------------------------------------
 // | something  | double  | none  | 1                         |
 // | otherThing | int     | array | 2                         |
-export interface VarTableValue {
-  type: Type
+export interface VarTableEntry {
+  type: NonVoidType
   kind?: Kind
   addr: number
 }
-export type VarTable = Record<string, VarTableValue>
+export type VarTable = Record<string, VarTableEntry>
 
 // ! Semantic Cube
 export type Operator = '+' | '-' | '*' | '/' | '<' | '>' | '<=' | '>=' | '==' | '!=' | '&&' | '||'

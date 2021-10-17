@@ -1,15 +1,51 @@
-import { FuncTable, FuncTableEntry, Kind, NonVoidType, Type, VarTable, VarTableValue } from 'semantics'
+import {
+  FuncTable,
+  FuncTableEntry,
+  Instruction,
+  Kind,
+  NonVoidType,
+  OperandStackItem,
+  Operation,
+  Operator,
+  semanticCube,
+  Type,
+  VarTable,
+  VarTableEntry,
+} from '../semantics'
+import { Queue, Stack } from 'mnemonist'
 
 class SymbolTable {
   funcTable: FuncTable
   currentFunc: string
   addressCounter: number
+  temporalCounter: number
+  operatorStack: Stack<Operator | '('>
+  operandStack: Stack<OperandStackItem>
+  instructionList: Queue<Instruction>
 
   constructor() {
     this.funcTable = {}
     this.currentFunc = 'global'
     this.addFunc('global', 'void')
     this.addressCounter = 0
+    this.temporalCounter = 999
+    this.operatorStack = new Stack()
+    this.operandStack = new Stack()
+    this.instructionList = new Queue()
+  }
+
+  getCurrentState(): {
+    funcTable: FuncTable
+    addressCounter: number
+    operatorStack: Stack<Operator | '('>
+    operandStack: Stack<OperandStackItem>
+  } {
+    return {
+      funcTable: this.funcTable,
+      addressCounter: this.addressCounter,
+      operatorStack: this.operatorStack,
+      operandStack: this.operandStack,
+    }
   }
 
   /**
@@ -87,7 +123,7 @@ class SymbolTable {
    * @returns {VarTableEntry | undefined} returns the found varTable entry
    * if not found in any scope, returns undefined
    */
-  getVarEntry(name: string, globalSearch = true): VarTableValue | undefined {
+  getVarEntry(name: string, globalSearch = true): VarTableEntry | undefined {
     if (!globalSearch) return this.getCurrentFunc().varsTable?.[name]
     return this.getCurrentFunc().varsTable?.[name] || this.getGlobalFunc().varsTable?.[name]
   }
@@ -144,6 +180,64 @@ class SymbolTable {
         addr: this.addressCounter++,
       }
     })
+  }
+
+  doOperation(): void {
+    if (!this.operatorStack.peek()) throw new Error('Error in expression, operand stack empty')
+    const operator = this.operatorStack.pop() as Operator
+    if (!this.operandStack.peek()) throw new Error('Error in expression, operand stack empty')
+    const [rightOperandName, rightOperandType] = this.operandStack.pop() as OperandStackItem
+    if (!this.operandStack.peek()) throw new Error('Error in expression, operand stack empty')
+    const [leftOperandName, leftOperandType] = this.operandStack.pop() as OperandStackItem
+
+    const resultType = semanticCube[operator][leftOperandType][rightOperandType]
+    if (resultType === 'Type Error') throw new Error('Type mismatch')
+    this.generateQuadruple(operator, leftOperandName, rightOperandName)
+
+    // push the temporal to the operand stack
+    this.operandStack.push([`${this.temporalCounter - 1}`, resultType])
+    console.log('pushed to operandStack', `${this.temporalCounter - 1} ${resultType}`)
+  }
+
+  private generateQuadruple(operation: Operation, leftIdentifier: string, rightIdentifier: string) {
+    const quadruple: Instruction = {
+      operation,
+      lhs: leftIdentifier,
+      rhs: rightIdentifier,
+      result: `t${this.temporalCounter++}`,
+    }
+    this.instructionList.enqueue(quadruple)
+    console.log('Added instruction: ', quadruple)
+  }
+
+  maybeDoOperation(...operators: Operator[]): void {
+    const hasPendingOperation = operators.some((op) => op === this.operatorStack.peek())
+    if (hasPendingOperation) this.doOperation()
+  }
+
+  pushOperand(identifier: string): void {
+    if (!this.getVarEntry(identifier)) throw new Error('Unexisting identifier')
+    const { type } = this.getVarEntry(identifier) as VarTableEntry
+    this.operandStack.push([identifier, type])
+    console.log('pushed to operandStack', `${identifier} ${type}`)
+  }
+
+  pushOperator(operator: Operator): void {
+    this.operatorStack.push(operator)
+    console.log('pushed to operatorStack', operator)
+  }
+
+  pushFakeFloor(): void {
+    this.operatorStack.push('(')
+    console.log('pushed to fake floor')
+  }
+
+  popFakeFloor(): void {
+    const operator = this.operatorStack.peek()
+    if (!operator) throw new Error(`Error in operator stack: Expected '(', but stack is empty`)
+    if (operator !== '(') throw new Error(`Error in operator stack: Expected '(', found ${operator}`)
+    this.operatorStack.pop()
+    console.log('Popped fake floor')
   }
 }
 
