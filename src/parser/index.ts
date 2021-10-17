@@ -1,5 +1,15 @@
 import { EmbeddedActionsParser } from 'chevrotain'
-import { FuncTable, Kind, NonVoidType, Type, VarTable, VarTableValue } from '../semantics/types'
+import {
+  FuncTable,
+  Instruction,
+  Kind,
+  NonVoidType,
+  OperandStackItem,
+  Operator,
+  Type,
+  VarTable,
+} from '../semantics/types'
+import { Queue, Stack } from 'mnemonist'
 import * as Lexer from '..'
 
 class EzParser extends EmbeddedActionsParser {
@@ -7,6 +17,9 @@ class EzParser extends EmbeddedActionsParser {
   pageName!: string
   addressCounter = 0
   currentFunc = 'global'
+  operatorStack = new Stack<Operator>()
+  operandStack = new Stack<OperandStackItem>()
+  instructionList = new Queue<Instruction>()
 
   constructor() {
     super(Lexer.tokens)
@@ -216,8 +229,6 @@ class EzParser extends EmbeddedActionsParser {
     ])
   })
 
-  // ? Renombrar a constante
-  // TODO: CREO QUE FALTA CONSTANTE CHAR
   public literal = this.RULE('literal', () => {
     this.OR([
       { ALT: () => this.CONSUME(Lexer.IntLiteral) },
@@ -292,6 +303,16 @@ class EzParser extends EmbeddedActionsParser {
 
   public multiplicativeExpression = this.RULE('multiplicativeExpression', () => {
     this.SUBRULE(this.atomicExpression)
+    // Check if pending multiplication
+
+    // const stackTop = this.operatorStack.peek()
+    // if(stackTop === '*' || stackTop === '/') {
+    //   const [rightOperand, rightType] = this.operandStack.pop()
+    //   const [leftOperand, leftType] = this.operandStack.pop()
+    //   const operation = this.operatorStack.pop()
+    //   const quad = createQuadruple(operation, leftOperand, rightOperand)
+    //   this.instructionList.enqueue(quad)
+    // }
     this.OPTION(() => {
       this.OR([{ ALT: () => this.CONSUME(Lexer.Times) }, { ALT: () => this.CONSUME(Lexer.Divide) }])
       this.SUBRULE(this.multiplicativeExpression)

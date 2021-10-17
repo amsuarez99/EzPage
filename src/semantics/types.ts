@@ -40,3 +40,13 @@ export type Operator = '+' | '-' | '*' | '/' | '<' | '>' | '<=' | '>=' | '==' | 
 // <type> <operator> <type> = <type>
 export type OperatorRecord = Record<NonVoidType, Record<NonVoidType, NonVoidType | TypeError>>
 export type SemanticCube = Record<Operator, OperatorRecord>
+
+// Stores a tuple of (address, type)
+export type OperandStackItem = [string, NonVoidType]
+export type Operation = Operator
+export interface Instruction {
+  operation: Operation
+  lhs?: string
+  rhs?: string
+  result: string
+}
