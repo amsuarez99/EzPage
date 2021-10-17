@@ -26,7 +26,7 @@ function genDiagram(text: string) {
   }
 }
 
-const p = genDiagram('page something')
+const p = genDiagram('test')
 
 // extract the serialized grammar.
 const parserInstance = p.parseInstance
