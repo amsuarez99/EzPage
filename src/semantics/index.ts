@@ -1,3 +1,2 @@
-export * from './funcsTable'
-export * from './varsTable'
 export * from './semanticCube'
+export * from './types'

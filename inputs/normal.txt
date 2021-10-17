@@ -1,17 +1,15 @@
 page MyFirstMFPage
 
-int something, something1[5] = [1,2,3], somethingElse = 24, abcd[10] = [1]
 string hola = "hola mundo"
 int abcd = "hola"
 int something[5][7] = [1,2,3,4,5,6,7,8,9,10]
 
-string something() {
+string something(int hola, int hola2) {
   string hello = "hello"
   return hello
 }
 
 void render() {
-  int something = 8.8
   container() {
     heading(size: 'h1', text: "hello 1")
     heading(size: 'h2', text: "hello 2")

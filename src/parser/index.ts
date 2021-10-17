@@ -1,7 +1,13 @@
-import { CstParser } from 'chevrotain'
+import { EmbeddedActionsParser } from 'chevrotain'
+import { FuncTable, Kind, NonVoidType, Type, VarTable, VarTableValue } from '../semantics/types'
 import * as Lexer from '..'
 
-class EzParser extends CstParser {
+class EzParser extends EmbeddedActionsParser {
+  funcTable: FuncTable = {}
+  pageName!: string
+  addressCounter = 0
+  currentFunc = 'global'
+
   constructor() {
     super(Lexer.tokens)
     this.performSelfAnalysis()
@@ -9,7 +15,11 @@ class EzParser extends CstParser {
 
   public page = this.RULE('page', () => {
     this.CONSUME(Lexer.Page)
-    this.CONSUME(Lexer.Id)
+    const { image: pageName } = this.CONSUME(Lexer.Id)
+    this.funcTable['global'] = {}
+
+    // get the name of the page and initialize Our global scope
+    this.pageName = pageName
     this.MANY({
       // Look ahead one token to see if render (our main method) is ahead
       GATE: () => this.LA(1).tokenType !== Lexer.Render,
@@ -20,16 +30,33 @@ class EzParser extends CstParser {
     this.SUBRULE(this.render)
   })
 
-
   // global variables should be different because they have to be declared constantly
   public globalVariables = this.RULE('globalVariables', () => {
-    this.SUBRULE(this.type)
+    const currentType = this.SUBRULE(this.type)
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.CONSUME(Lexer.Id)
+        const { image: varName } = this.CONSUME(Lexer.Id)
+        let currentKind: Kind | undefined
         // Optional indexing
-        this.OPTION(() => this.SUBRULE(this.constantArrayIndexation))
-        this.OPTION1(() => this.SUBRULE1(this.constantArrayIndexation))
+        this.OPTION(() => {
+          this.SUBRULE(this.constantArrayIndexation)
+          currentKind = 'array'
+        })
+
+        this.OPTION1(() => {
+          this.SUBRULE1(this.constantArrayIndexation)
+          currentKind = 'matrix'
+        })
+
+        const varTable = (this.funcTable['global'].varsTable = this.funcTable['global'].varsTable || {})
+        // Create an entry for a unique identifier
+        if (varTable[varName]) throw new Error('Duplicate Identifier')
+        varTable[varName] = {
+          type: currentType,
+          kind: currentKind,
+          addr: this.addressCounter++,
+        }
+
         // Optional Initialization
         this.OPTION2(() => {
           this.CONSUME(Lexer.Equals)
@@ -47,75 +74,132 @@ class EzParser extends CstParser {
   })
 
   public constantArray = this.RULE('constantArray', () => {
-    this.CONSUME1(Lexer.LBracket)
+    this.CONSUME(Lexer.LBracket)
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
         this.OR([{ ALT: () => this.SUBRULE(this.literal) }])
       },
       SEP: Lexer.Comma,
     })
-    this.CONSUME1(Lexer.RBracket)
+    this.CONSUME(Lexer.RBracket)
   })
 
   public array = this.RULE('array', () => {
-    this.CONSUME1(Lexer.LBracket)
+    this.CONSUME(Lexer.LBracket)
     this.AT_LEAST_ONE_SEP({
-      DEF: () => {
-        this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
-      },
+      DEF: () => this.SUBRULE(this.expression),
       SEP: Lexer.Comma,
     })
-    this.CONSUME1(Lexer.RBracket)
+    this.CONSUME(Lexer.RBracket)
   })
 
   public func = this.RULE('func', () => {
-    this.OR([{ ALT: () => this.SUBRULE(this.type) }, { ALT: () => this.CONSUME(Lexer.Void) }])
-    this.CONSUME(Lexer.Id)
+    const returnType = this.OR([
+      { ALT: () => this.SUBRULE(this.type) },
+      { ALT: () => this.CONSUME(Lexer.Void).image as Type },
+    ])
+    const funcName = this.CONSUME(Lexer.Id).image
+    // to set the current scope
+    this.currentFunc = funcName
+
+    // there can't be two functions that are the same
+    if (this.funcTable[funcName]) throw new Error('Duplicate Identifier')
+    this.funcTable[funcName] = {
+      type: returnType,
+    }
     this.CONSUME(Lexer.OParentheses)
-    this.OPTION(() => this.SUBRULE(this.params))
+    const funcParams = this.OPTION(() => this.SUBRULE(this.params))
+
+    // validate for duplicate identifiers in params
+    if (funcParams?.length) {
+      this.funcTable[funcName].varsTable = funcParams.reduce((accum, param) => {
+        const [paramType, paramName] = param
+        if (accum[paramName]) throw new Error('Duplicate Identifier')
+        accum[paramName] = {
+          type: paramType,
+          addr: this.addressCounter++,
+        }
+        return accum
+      }, {} as VarTable)
+    }
+
+    // Add args to func
+    if (funcParams?.length) this.funcTable[funcName].args = funcParams.map((param) => param[0])
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.block)
+    delete this.funcTable[funcName]
+    this.currentFunc = 'global'
   })
 
-  public block = this.RULE('block', () => {
+  public block = this.RULE('block', (funcName: string) => {
     this.CONSUME(Lexer.LCurly)
-    this.AT_LEAST_ONE(() => this.SUBRULE(this.statement))
+    this.AT_LEAST_ONE(() => this.SUBRULE(this.statement, { ARGS: [funcName] }))
     this.CONSUME(Lexer.RCurly)
   })
 
   public params = this.RULE('params', () => {
+    const params: [NonVoidType, string][] = []
     this.AT_LEAST_ONE_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        this.SUBRULE(this.type)
-        this.CONSUME(Lexer.Id)
+        const paramType = this.SUBRULE(this.type) as unknown as NonVoidType
+        const paramName = this.CONSUME(Lexer.Id).image
+        params.push([paramType, paramName])
       },
     })
+    return params.length ? params : undefined
   })
 
   public type = this.RULE('type', () => {
-    this.OR([
+    // We get the chosen type and return it
+    const { image } = this.OR([
       { ALT: () => this.CONSUME(Lexer.Int) },
       { ALT: () => this.CONSUME(Lexer.Float) },
       { ALT: () => this.CONSUME(Lexer.Char) },
       { ALT: () => this.CONSUME(Lexer.Bool) },
       { ALT: () => this.CONSUME(Lexer.StringType) },
     ])
+    return image as NonVoidType
   })
 
   public localVariables = this.RULE('localVariables', () => {
-    this.SUBRULE(this.type)
+    let varsTable: VarTable
+    this.ACTION(() => {
+      varsTable = this.funcTable[this.currentFunc].varsTable || {}
+    })
+    const currentType = this.SUBRULE(this.type)
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.CONSUME(Lexer.Id)
-        this.OPTION(() => this.SUBRULE(this.arrayIndexation))
-        this.OPTION1(() => this.SUBRULE1(this.arrayIndexation))
+        const varName = this.CONSUME(Lexer.Id).image
+        let currentKind: Kind | undefined
+        this.OPTION(() => {
+          this.SUBRULE(this.arrayIndexation)
+          currentKind = 'array'
+        })
+        this.OPTION1(() => {
+          this.SUBRULE1(this.arrayIndexation)
+          currentKind = 'matrix'
+        })
+
+        this.ACTION(() => {
+          if (varsTable[varName]) throw new Error('Duplicate Identifier')
+          varsTable[varName] = {
+            type: currentType,
+            kind: currentKind,
+            addr: this.addressCounter++,
+          }
+        })
+
         this.OPTION2(() => {
           this.CONSUME(Lexer.Equals)
-          this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.array) }])
+          this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
         })
       },
       SEP: Lexer.Comma,
+    })
+
+    this.ACTION(() => {
+      this.funcTable[this.currentFunc].varsTable = varsTable
     })
   })
 
@@ -143,8 +227,6 @@ class EzParser extends CstParser {
     ])
   })
 
-  // table(someId: someId)
-  //
   public arrayIndexation = this.RULE('arrayIndexation', () => {
     this.CONSUME(Lexer.LBracket)
     this.SUBRULE(this.expression)
@@ -160,24 +242,22 @@ class EzParser extends CstParser {
   public assignment = this.RULE('assignment', () => {
     this.SUBRULE(this.variable)
     this.CONSUME(Lexer.Equals)
-    this.SUBRULE(this.expression)
+    this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
   })
 
   public expression = this.RULE('expression', () => {
-    this.AT_LEAST_ONE_SEP({
-      SEP: Lexer.OR,
-      DEF: () => {
-        this.SUBRULE(this.andExp)
-      },
+    this.SUBRULE(this.andExp)
+    this.OPTION(() => {
+      this.CONSUME(Lexer.OR)
+      this.SUBRULE1(this.andExp)
     })
   })
 
   public andExp = this.RULE('andExp', () => {
-    this.AT_LEAST_ONE_SEP({
-      SEP: Lexer.AND,
-      DEF: () => {
-        this.SUBRULE(this.equalityExpression)
-      },
+    this.SUBRULE(this.equalityExpression)
+    this.OPTION(() => {
+      this.CONSUME(Lexer.AND)
+      this.SUBRULE1(this.equalityExpression)
     })
   })
 
