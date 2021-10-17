@@ -77,25 +77,23 @@ class EzParser extends CstParser {
   })
 
   public constantArray = this.RULE('constantArray', () => {
-    this.CONSUME1(Lexer.LBracket)
+    this.CONSUME(Lexer.LBracket)
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
         this.OR([{ ALT: () => this.SUBRULE(this.literal) }])
       },
       SEP: Lexer.Comma,
     })
-    this.CONSUME1(Lexer.RBracket)
+    this.CONSUME(Lexer.RBracket)
   })
 
   public array = this.RULE('array', () => {
-    this.CONSUME1(Lexer.LBracket)
+    this.CONSUME(Lexer.LBracket)
     this.AT_LEAST_ONE_SEP({
-      DEF: () => {
-        this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
-      },
+      DEF: () => this.CONSUME(this.expression),
       SEP: Lexer.Comma,
     })
-    this.CONSUME1(Lexer.RBracket)
+    this.CONSUME(Lexer.RBracket)
   })
 
   public func = this.RULE('func', () => {
@@ -165,7 +163,7 @@ class EzParser extends CstParser {
         this.OPTION1(() => this.SUBRULE1(this.arrayIndexation))
         this.OPTION2(() => {
           this.CONSUME(Lexer.Equals)
-          this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.array) }])
+          this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
         })
       },
       SEP: Lexer.Comma,
@@ -211,7 +209,7 @@ class EzParser extends CstParser {
   public assignment = this.RULE('assignment', () => {
     this.SUBRULE(this.variable)
     this.CONSUME(Lexer.Equals)
-    this.SUBRULE(this.expression)
+    this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
   })
 
   public expression = this.RULE('expression', () => {
