@@ -12,12 +12,12 @@ export type Kind = 'array' | 'matrix'
 // | myFunc     | double  | none            | *Ref to varTable*         |
 // | myFunc2    | int     | [int, int, int] | 2                         |
 
-export interface FuncTableValue {
+export interface FuncTableEntry {
   type?: Type
   args?: Type[]
   varsTable?: VarTable
 }
-export type FuncTable = Record<string, FuncTableValue>
+export type FuncTable = Record<string, FuncTableEntry>
 
 // ! Variable Directory Types
 // * This is an object so we can index by identifier name
