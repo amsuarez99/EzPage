@@ -12,13 +12,16 @@ import {
   VarTable,
   VarTableEntry,
 } from '../semantics'
+import { log } from '../logger'
 import { Queue, Stack } from 'mnemonist'
+import { isSimpleOperation } from './utils'
 
 class SymbolTable {
   funcTable: FuncTable
   currentFunc: string
   addressCounter: number
   temporalCounter: number
+  // '(' is for fake floor
   operatorStack: Stack<Operator | '('>
   operandStack: Stack<OperandStackItem>
   instructionList: Queue<Instruction>
@@ -83,6 +86,7 @@ class SymbolTable {
    */
   setCurrentFunc(funcName: string): void {
     this.currentFunc = funcName
+    log(`changed current func: ${funcName}`)
   }
 
   /**
@@ -112,7 +116,10 @@ class SymbolTable {
    */
   deleteVarsTable(funcName?: string): void {
     const funcEntry = funcName ? this.getFuncEntry(funcName) : this.getCurrentFunc()
-    if (funcEntry) funcEntry.varsTable = undefined
+    if (funcEntry) {
+      funcEntry.varsTable = undefined
+      log(`Deleted varsTable for funcEntry: ${funcName || this.currentFunc}`)
+    }
   }
 
   /**
@@ -139,6 +146,7 @@ class SymbolTable {
     this.funcTable[name] = {
       type: returnType,
     }
+    log(`Added funcEntry: ${name}`, this.getCurrentFunc())
   }
 
   /**
@@ -156,7 +164,9 @@ class SymbolTable {
     if (this.currentFunc === 'global') throw new Error("Can't add args to global Func")
 
     // add args to current func
-    currentFunc.args = args.map((arg) => arg.type)
+    const funcArgs = args.map((arg) => arg.type)
+    currentFunc.args = funcArgs
+    log(`Added args to func ${this.currentFunc}`, funcArgs)
   }
 
   /**
@@ -167,18 +177,23 @@ class SymbolTable {
    * kind: the kind of the variable (matrix, array)
    */
   addVars(...args: { name: string; type: NonVoidType; kind?: Kind }[]): void {
-    if (!this.getVarTable()) this.getCurrentFunc().varsTable = {}
+    if (!this.getVarTable()) {
+      this.getCurrentFunc().varsTable = {}
+      log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
+    }
     args.forEach((arg) => {
       const { type, name, kind } = arg
       // disable global search, only care about current scope
       if (this.getVarEntry(name, false)) throw new Error('Duplicate Identifier')
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const varTable = this.getVarTable()!
-      varTable[name] = {
+      const varEntry = {
         type,
         kind,
         addr: this.addressCounter++,
       }
+      varTable[name] = varEntry
+      log(`Added var __${name}__ to varsTable of ${this.currentFunc}`, varEntry)
     })
   }
 
@@ -186,28 +201,41 @@ class SymbolTable {
     if (!this.operatorStack.peek()) throw new Error('Error in expression, operand stack empty')
     const operator = this.operatorStack.pop() as Operator
     if (!this.operandStack.peek()) throw new Error('Error in expression, operand stack empty')
-    const [rightOperandName, rightOperandType] = this.operandStack.pop() as OperandStackItem
+    const right = this.operandStack.pop() as OperandStackItem
     if (!this.operandStack.peek()) throw new Error('Error in expression, operand stack empty')
-    const [leftOperandName, leftOperandType] = this.operandStack.pop() as OperandStackItem
-
-    const resultType = semanticCube[operator][leftOperandType][rightOperandType]
-    if (resultType === 'Type Error') throw new Error('Type mismatch')
-    this.generateQuadruple(operator, leftOperandName, rightOperandName)
-
-    // push the temporal to the operand stack
-    this.operandStack.push([`${this.temporalCounter - 1}`, resultType])
-    console.log('pushed to operandStack', `${this.temporalCounter - 1} ${resultType}`)
+    const left = this.operandStack.pop() as OperandStackItem
+    const quad = this.generateQuadruple(operator, left, right)
+    this.instructionList.enqueue(quad)
+    log('***Added instruction***', quad)
   }
 
-  private generateQuadruple(operation: Operation, leftIdentifier: string, rightIdentifier: string) {
+  generateQuadruple(operation: Operation, leftOperand: OperandStackItem, rightOperand: OperandStackItem): Instruction {
+    const [rightOperandName, rightOperandType] = rightOperand
+    const [leftOperandName, leftOperandType] = leftOperand
+    if (!isSimpleOperation(operation))
+      throw new Error(`Tried generating quad for: ${operation}. Complex quadruples not implemented yet`)
+    const resultType = semanticCube[operation][leftOperandType][rightOperandType]
+    if (resultType === 'Type Error') throw new Error('Type Mismatch')
+    if (operation === '=') {
+      const quadruple: Instruction = {
+        operation,
+        lhs: rightOperandName,
+        result: leftOperandName,
+      }
+      return quadruple
+    }
+
     const quadruple: Instruction = {
       operation,
-      lhs: leftIdentifier,
-      rhs: rightIdentifier,
+      lhs: leftOperandName,
+      rhs: rightOperandName,
       result: `t${this.temporalCounter++}`,
     }
-    this.instructionList.enqueue(quadruple)
-    console.log('Added instruction: ', quadruple)
+    // push the temporal to the operand stack
+    const temp = [`t${this.temporalCounter - 1}`, resultType] as OperandStackItem
+    this.operandStack.push(temp)
+    log(`pushed __temporal__ to operandStack:`, temp)
+    return quadruple
   }
 
   maybeDoOperation(...operators: Operator[]): void {
@@ -219,17 +247,17 @@ class SymbolTable {
     if (!this.getVarEntry(identifier)) throw new Error('Unexisting identifier')
     const { type } = this.getVarEntry(identifier) as VarTableEntry
     this.operandStack.push([identifier, type])
-    console.log('pushed to operandStack', `${identifier} ${type}`)
+    log(`pushed to operand stack: [${identifier}, ${type}]`)
   }
 
   pushOperator(operator: Operator): void {
     this.operatorStack.push(operator)
-    console.log('pushed to operatorStack', operator)
+    log(`pushed to operator stack: ${operator}`)
   }
 
   pushFakeFloor(): void {
     this.operatorStack.push('(')
-    console.log('pushed to fake floor')
+    log('pushed fake floor')
   }
 
   popFakeFloor(): void {
@@ -237,7 +265,7 @@ class SymbolTable {
     if (!operator) throw new Error(`Error in operator stack: Expected '(', but stack is empty`)
     if (operator !== '(') throw new Error(`Error in operator stack: Expected '(', found ${operator}`)
     this.operatorStack.pop()
-    console.log('Popped fake floor')
+    log('Popped fake floor')
   }
 }
 

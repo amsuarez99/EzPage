@@ -149,8 +149,11 @@ class EzParser extends EmbeddedActionsParser {
 
         this.ACTION(() => this.symbolTable.addVars({ name: varName, kind: currentKind, type: currentType }))
         this.OPTION2(() => {
-          this.CONSUME(Lexer.Equals)
+          this.ACTION(() => this.symbolTable.pushOperand(varName))
+          const operator = this.CONSUME(Lexer.Equals).image as '='
+          this.ACTION(() => this.symbolTable.pushOperator(operator))
           this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
+          this.ACTION(() => this.symbolTable.doOperation())
         })
       },
       SEP: Lexer.Comma,
@@ -194,11 +197,12 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public assignment = this.RULE('assignment', () => {
-    this.SUBRULE(this.variable)
-    // this.ACTION(() => this.symbolTable.pushOperand(id))
-    this.CONSUME(Lexer.Equals).image as '='
-    // this.ACTION(() => this.symbolTable.pushOperator(operator))
+    const id = this.SUBRULE(this.variable)
+    this.ACTION(() => this.symbolTable.pushOperand(id))
+    const operator = this.CONSUME(Lexer.Equals).image as '='
+    this.ACTION(() => this.symbolTable.pushOperator(operator))
     this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
+    this.ACTION(() => this.symbolTable.doOperation())
   })
 
   public expression = this.RULE('expression', () => {

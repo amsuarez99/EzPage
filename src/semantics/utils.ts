@@ -1,18 +1,10 @@
-// import { Instruction, OperandStackItem, Operator } from "semantics"
-// import {semanticCube} from './semanticCube'
+import { Operation, Operator } from '.'
 
-// export const createQuadruple = (operator: Operator, lhs: OperandStackItem, rhs: OperandStackItem)=> {
-//   const [lhsOperand, lhsType] = lhs
-//   const [rhsOperand, rhsType] = rhs
-//   const type = semanticCube[operator][lhsType][rhsType]
-//   if(type === 'Type Error') throw new Error('Type mismatch')
-//   const instruction: Instruction = {
-//     operation: operator,
-//     lhs: lhsOperand,
-//     rhs: rhsOperand,
-//     result: getVirtualMemoryLocation(type, scope)
-//   }
-// }
+const isSimpleOperation = (operation: Operation): operation is Operator => {
+  return !['gotoT', 'gotoF', 'goto', 'print'].includes(operation)
+}
+
+export { isSimpleOperation }
 
 // Memory Map
 /*

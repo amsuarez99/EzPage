@@ -14,7 +14,7 @@ export type Kind = 'array' | 'matrix'
 
 export interface FuncTableEntry {
   type?: Type
-  args?: Type[]
+  args?: NonVoidType[]
   varsTable?: VarTable
 }
 export type FuncTable = Record<string, FuncTableEntry>
@@ -34,7 +34,7 @@ export interface VarTableEntry {
 export type VarTable = Record<string, VarTableEntry>
 
 // ! Semantic Cube
-export type Operator = '+' | '-' | '*' | '/' | '<' | '>' | '<=' | '>=' | '==' | '!=' | '&&' | '||'
+export type Operator = '+' | '-' | '*' | '/' | '<' | '>' | '<=' | '>=' | '==' | '!=' | '&&' | '||' | '='
 // * To store operator / operands relationship
 // General structure:
 // <type> <operator> <type> = <type>
@@ -43,7 +43,7 @@ export type SemanticCube = Record<Operator, OperatorRecord>
 
 // Stores a tuple of (address, type)
 export type OperandStackItem = [string, NonVoidType]
-export type Operation = Operator
+export type Operation = Operator | 'print' | 'gotoF' | 'goto' | 'gotoT'
 export interface Instruction {
   operation: Operation
   lhs?: string
