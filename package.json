@@ -28,10 +28,12 @@
     "jest": "^27.2.5",
     "nodemon": "^2.0.13",
     "ts-jest": "^27.0.6",
+    "ts-node": "^10.4.0",
     "tsc": "^2.0.3",
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "chevrotain": "^9.1.0"
+    "chevrotain": "^9.1.0",
+    "mnemonist": "^0.38.4"
   }
 }
