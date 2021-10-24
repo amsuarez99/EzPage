@@ -88,7 +88,7 @@ class SymbolTable {
    * if not found in any scope, returns undefined
    */
   getVarEntry(name: string, globalSearch = true): VarTableValue | undefined {
-    if (!globalSearch) this.getCurrentFunc().varsTable?.[name]
+    if (!globalSearch) return this.getCurrentFunc().varsTable?.[name]
     return this.getCurrentFunc().varsTable?.[name] || this.getGlobalFunc().varsTable?.[name]
   }
 
