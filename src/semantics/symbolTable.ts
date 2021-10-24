@@ -1,4 +1,4 @@
-import { FuncTable, FuncTableEntry, Kind, NonVoidType, Type, VarTable } from 'semantics'
+import { FuncTable, FuncTableEntry, Kind, NonVoidType, Type, VarTable, VarTableValue } from 'semantics'
 
 class SymbolTable {
   funcTable: FuncTable
@@ -12,86 +12,138 @@ class SymbolTable {
     this.addressCounter = 0
   }
 
+  /**
+   * @returns the FuncTable structure
+   */
   getFuncTable(): FuncTable {
     return this.funcTable
   }
 
-  getFuncEntry(name: string): FuncTableEntry {
+  /**
+   * Looks up a funciton by name in the FuncTable
+   * @param {string} name The name of the entry you want to look
+   * @returns {FuncTableEntry | undefined} a FuncTable entry if found, undefined if not found
+   */
+  getFuncEntry(name: string): FuncTableEntry | undefined {
     return this.funcTable[name]
   }
 
+  /**
+   * Returns the current function entry
+   * Will always have a value
+   * Set as global from the start
+   * Set as the identifier of a function when a func is defined
+   * * Note: this entry is automatically set when addFunc is called
+   * @returns the current FuncTable entry
+   */
   getCurrentFunc(): FuncTableEntry {
-    return this.getFuncEntry(this.currentFunc)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return this.getFuncEntry(this.currentFunc)!
   }
 
-  hasFunctionEntry(name: string): boolean {
-    return !!this.funcTable[name]
+  /**
+   * Changes the current func
+   * @param {string} funcName the current function name to set
+   */
+  setCurrentFunc(funcName: string): void {
+    this.currentFunc = funcName
   }
 
-  hasVarEntry(name: string): boolean {
-    return !!this.getCurrentFunc().varsTable?.[name]
+  /**
+   * Returns the global function entry (will always exist)
+   * @returns the global FuncTable entry
+   */
+  getGlobalFunc(): FuncTableEntry {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return this.getFuncEntry('global')!
   }
 
-  doesVarExist(name: string): boolean {
-    const currentFunc = this.getCurrentFunc()
-    // check only global scope
-    if (currentFunc === 'global') return this.hasVarEntry(name)
-    // check both global and local scope
-    return this.hasVarEntry(name) || !!this.funcTable['global'].varsTable?.[name]
+  /**
+   * Gets the varsTable of a funcEntry
+   * @param {stirng?} funcName  name of the funcEntry to get the varsTable
+   * @returns {VarTable | undefined} varTable if found
+   * optional because it defaults to the currentFunc
+   */
+  getVarTable(funcName?: string): VarTable | undefined {
+    const funcEntry = funcName ? this.getFuncEntry(funcName) : this.getCurrentFunc()
+    return funcEntry?.varsTable
   }
 
+  /**
+   * Deletes the varsTable of a funcEntry
+   * @param {string?} funcName name of the funcEntry to delete the varsTable
+   * optional because it defaults to the currentFunc
+   */
+  deleteVarsTable(funcName?: string): void {
+    const funcEntry = funcName ? this.getFuncEntry(funcName) : this.getCurrentFunc()
+    if (funcEntry) funcEntry.varsTable = undefined
+  }
+
+  /**
+   * Gets the variable entry in the currentFunc's varTable
+   * If not found, checks the global scope
+   * @param {string} name Name of the variable to search
+   * @param {boolean} globalSearch Flag that disables globalSearch
+   * @returns {VarTableEntry | undefined} returns the found varTable entry
+   * if not found in any scope, returns undefined
+   */
+  getVarEntry(name: string, globalSearch = true): VarTableValue | undefined {
+    if (!globalSearch) this.getCurrentFunc().varsTable?.[name]
+    return this.getCurrentFunc().varsTable?.[name] || this.getGlobalFunc().varsTable?.[name]
+  }
+
+  /**
+   * Adds a function to the FuncTable
+   * @param {string} name the name of the function
+   * @param {string} returnType the returnType of the function
+   */
   addFunc(name: string, returnType: Type): void {
-    if (this.hasFunctionEntry(name)) throw new Error('Duplicate Function Entry')
-    this.currentFunc = name
+    if (this.getFuncEntry(name)) throw new Error('Duplicate Function Entry')
+    this.setCurrentFunc(name)
     this.funcTable[name] = {
       type: returnType,
     }
   }
 
-  addArgsToFunc(...args: [NonVoidType, string][]): void {
+  /**
+   * A function that adds one or more arguments to the current entry in the funcTable
+   * @param {...[NonVoidType, string]+} args one or more arguments represented as tuples
+   * tuple[0] = the type of the argument
+   * tuple[1] = the name of the argument
+   * Ex: [string, "hello"]
+   */
+  addArgs(...args: { type: NonVoidType }[]): void {
     // ignore if args is empty
     if (!args?.length) return
+
+    const currentFunc = this.getCurrentFunc()
     if (this.currentFunc === 'global') throw new Error("Can't add args to global Func")
 
     // add args to current func
-    const currentFunc = this.getCurrentFunc()
-    currentFunc.args = args.map((arg) => arg[0])
-
-    // add args to varTable
-    const varEntries = args.map((arg) => {
-      const [type, name] = arg
-      return {
-        name,
-        type,
-      }
-    })
-    this.addVars(...varEntries)
+    currentFunc.args = args.map((arg) => arg.type)
   }
 
+  /**
+   * Adds variables to the current entry in the funcTable
+   * @param {...{name: string, type: NonVoidType, kind?: Kind}} args One or more variables to be added
+   * name: the name of the variable
+   * type: the type of the variable (int, float, string, etc.)
+   * kind: the kind of the variable (matrix, array)
+   */
   addVars(...args: { name: string; type: NonVoidType; kind?: Kind }[]): void {
-    const varTable = args.reduce((accum, arg) => {
+    if (!this.getVarTable()) this.getCurrentFunc().varsTable = {}
+    args.forEach((arg) => {
       const { type, name, kind } = arg
-      // exists in current varTable?
-      if (accum[name] || this.hasVarEntry(name)) throw new Error('Duplicate Identifier')
-      accum[name] = {
+      // disable global search, only care about current scope
+      if (this.getVarEntry(name, false)) throw new Error('Duplicate Identifier')
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const varTable = this.getVarTable()!
+      varTable[name] = {
         type,
         kind,
         addr: this.addressCounter++,
       }
-      return accum
-    }, {} as VarTable)
-
-    // Append to existing table
-    const currentFunc = this.getCurrentFunc()
-    currentFunc.varsTable = {
-      ...currentFunc.varsTable,
-      ...varTable,
-    }
-  }
-
-  deleteFunc(name: string): void {
-    delete this.funcTable[name]
-    this.currentFunc = 'global'
+    })
   }
 }
 

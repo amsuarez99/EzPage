@@ -97,7 +97,7 @@ class EzParser extends EmbeddedActionsParser {
 
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.block)
-    this.ACTION(() => this.symbolTable.deleteFunc(funcName))
+    this.ACTION(() => this.symbolTable.deleteVarsTable())
   })
 
   public block = this.RULE('block', (funcName: string) => {
@@ -107,16 +107,17 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public params = this.RULE('params', () => {
-    const params: [NonVoidType, string][] = []
+    const params: { type: NonVoidType; name: string }[] = []
     this.AT_LEAST_ONE_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
-        const paramType = this.SUBRULE(this.type)
-        const paramName = this.CONSUME(Lexer.Id).image
-        params.push([paramType, paramName])
+        const type = this.SUBRULE(this.type)
+        const name = this.CONSUME(Lexer.Id).image
+        params.push({ type, name })
       },
     })
-    this.ACTION(() => this.symbolTable.addArgsToFunc(...params))
+    this.ACTION(() => this.symbolTable.addArgs(...params))
+    this.ACTION(() => this.symbolTable.addVars(...params))
   })
 
   public type = this.RULE('type', () => {
@@ -132,10 +133,6 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public localVariables = this.RULE('localVariables', () => {
-    // let varsTable: VarTable
-    // this.ACTION(() => {
-    //   varsTable = this.funcTable[this.currentFunc].varsTable || {}
-    // })
     const currentType = this.SUBRULE(this.type)
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
