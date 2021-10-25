@@ -14,6 +14,7 @@ import {
 } from '../semantics'
 import { log } from '../logger'
 import { Stack } from 'mnemonist'
+import { GotoOperation } from './types'
 
 class SymbolTable {
   funcTable: FuncTable
@@ -251,8 +252,8 @@ class SymbolTable {
   }
 
   pushLiteral(value: string, type: NonVoidType): void {
-    this.getLiteralAddr(value)
-    this.operandStack.push([value, type])
+    const addr = this.getLiteralAddr(value).toString()
+    this.operandStack.push([addr, type])
     log('Added literal to stack', { value, type })
   }
 
@@ -286,8 +287,13 @@ class SymbolTable {
     return stackItem
   }
 
+  getLiteralAddr(literal: string): number {
+    if (!this.literalTable[literal]) this.literalTable[literal] = this.literalCounter++
+    return this.literalTable[literal]
+  }
+
   // Flow Control
-  addPendingJump(): void {
+  handleCondition(): void {
     const [conditionName, conditionType] = this.safePop(this.operandStack)
     if (conditionType !== 'bool') throw new Error(`Expecting condition type to be boolean, found: ${conditionType}`)
 
@@ -296,14 +302,33 @@ class SymbolTable {
       lhs: conditionName,
       result: 'pending_jump',
     }
+
     this.instructionList.push(quad)
-    this.jumpStack.push(this.instructionList.length)
+    this.jumpStack.push(this.instructionList.length - 1)
     log('***Added instruction***', quad)
   }
 
-  getLiteralAddr(literal: string): number {
-    if (!this.literalTable[literal]) this.literalTable[literal] = this.literalCounter++
-    return this.literalTable[literal]
+  handleElseCondition(): void {
+    const falseCondition = this.safePop(this.jumpStack)
+    const quad: Instruction = {
+      operation: 'goto',
+      result: 'pending_jump',
+    }
+    this.instructionList.push(quad)
+    log('***Added instruction***', quad)
+    this.jumpStack.push(this.instructionList.length - 1)
+    this.fillPendingJump(falseCondition)
+  }
+
+  handleConditionEnd(): void {
+    const destination = this.safePop(this.jumpStack)
+    this.fillPendingJump(destination)
+  }
+
+  fillPendingJump(instructionNo: number): void {
+    if (this.instructionList[instructionNo].result !== 'pending_jump')
+      throw new Error('Weird Error: expected to fill a pending jump but it was not labeled as such')
+    this.instructionList[instructionNo].result = this.instructionList.length.toString()
   }
 }
 

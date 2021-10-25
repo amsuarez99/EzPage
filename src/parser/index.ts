@@ -1,6 +1,7 @@
 import { EmbeddedActionsParser } from 'chevrotain'
 import { Kind, NonVoidType, Type, SymbolTable } from '../semantics'
 import * as Lexer from '..'
+import { log } from '../logger'
 
 class EzParser extends EmbeddedActionsParser {
   pageName!: string
@@ -26,6 +27,7 @@ class EzParser extends EmbeddedActionsParser {
       },
     })
     this.SUBRULE(this.render)
+    log(this.symbolTable.instructionList)
   })
 
   // global variables should be different because they have to be declared constantly
@@ -342,12 +344,14 @@ class EzParser extends EmbeddedActionsParser {
   public ifStatement = this.RULE('ifStatement', () => {
     this.CONSUME(Lexer.If)
     this.SUBRULE(this.parenthesizedExpression)
-    this.ACTION(() => this.symbolTable.addPendingJump())
+    this.ACTION(() => this.symbolTable.handleCondition())
     this.SUBRULE(this.block)
     this.OPTION(() => {
       this.CONSUME(Lexer.Else)
+      this.ACTION(() => this.symbolTable.handleElseCondition())
       this.SUBRULE1(this.block)
     })
+    this.ACTION(() => this.symbolTable.handleConditionEnd())
   })
 
   public whileLoop = this.RULE('whileLoop', () => {

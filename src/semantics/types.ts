@@ -43,8 +43,8 @@ export type SemanticCube = Record<Operator, OperatorRecord>
 
 // Stores a tuple of (address, type)
 export type OperandStackItem = [string, NonVoidType]
-export type JumpOperation = 'goto' | 'gotoF' | 'gotoT'
-export type Operation = Operator | JumpOperation | 'print'
+export type GotoOperation = 'goto' | 'gotoF' | 'gotoT'
+export type Operation = Operator | GotoOperation | 'print'
 export interface Instruction {
   operation: Operation
   lhs?: string

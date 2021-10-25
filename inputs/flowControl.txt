@@ -6,8 +6,11 @@ int something = 1234
 
 string something(int hola, int hola2) {
   int mmmmm = abcd / (something + hola)
+  int myVar
   if(5 == mmmmm) {
-    int myVar = mmmmm
+    myVar = 5
+  } else {
+    myVar = 7
   }
   return
 }

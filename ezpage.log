@@ -84,6 +84,11 @@ pushed __temporal__ to operandStack:
   "lhs": "t1000",
   "result": "mmmmm"
 }
+Added var __myVar__ to varsTable of something
+{
+  "type": "int",
+  "addr": 6
+}
 pushed fake floor
 Added literal to stack
 {
