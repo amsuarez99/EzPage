@@ -221,6 +221,7 @@ class EzParser extends EmbeddedActionsParser {
       const operator = this.CONSUME(Lexer.AND).image as '&&'
       this.ACTION(() => this.symbolTable.pushOperator(operator))
       this.SUBRULE1(this.equalityExpression)
+      this.ACTION(() => this.symbolTable.doOperation())
     })
   })
 
