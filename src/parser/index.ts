@@ -149,8 +149,11 @@ class EzParser extends EmbeddedActionsParser {
 
         this.ACTION(() => this.symbolTable.addVars({ name: varName, kind: currentKind, type: currentType }))
         this.OPTION2(() => {
-          this.CONSUME(Lexer.Equals)
+          this.ACTION(() => this.symbolTable.pushOperand(varName))
+          const operator = this.CONSUME(Lexer.Equals).image as '='
+          this.ACTION(() => this.symbolTable.pushOperator(operator))
           this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
+          this.ACTION(() => this.symbolTable.doOperation())
         })
       },
       SEP: Lexer.Comma,
@@ -171,12 +174,13 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public literal = this.RULE('literal', () => {
-    this.OR([
-      { ALT: () => this.CONSUME(Lexer.IntLiteral) },
-      { ALT: () => this.CONSUME(Lexer.FloatLiteral) },
-      { ALT: () => this.CONSUME(Lexer.StringLiteral) },
-      { ALT: () => this.CONSUME(Lexer.BoolLiteral) },
+    const value = this.OR([
+      { ALT: () => this.CONSUME(Lexer.IntLiteral).image },
+      { ALT: () => this.CONSUME(Lexer.FloatLiteral).image },
+      { ALT: () => this.CONSUME(Lexer.StringLiteral).image },
+      { ALT: () => this.CONSUME(Lexer.BoolLiteral).image },
     ])
+    return value
   })
 
   public arrayIndexation = this.RULE('arrayIndexation', () => {
@@ -186,83 +190,115 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public variable = this.RULE('variable', () => {
-    this.CONSUME(Lexer.Id)
+    const id = this.CONSUME(Lexer.Id).image
     this.OPTION(() => this.SUBRULE(this.arrayIndexation))
     this.OPTION1(() => this.SUBRULE1(this.arrayIndexation))
+    return id
   })
 
   public assignment = this.RULE('assignment', () => {
-    this.SUBRULE(this.variable)
-    this.CONSUME(Lexer.Equals)
+    const id = this.SUBRULE(this.variable)
+    this.ACTION(() => this.symbolTable.pushOperand(id))
+    const operator = this.CONSUME(Lexer.Equals).image as '='
+    this.ACTION(() => this.symbolTable.pushOperator(operator))
     this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
+    this.ACTION(() => this.symbolTable.doOperation())
   })
 
   public expression = this.RULE('expression', () => {
     this.SUBRULE(this.andExp)
     this.OPTION(() => {
-      this.CONSUME(Lexer.OR)
+      const operator = this.CONSUME(Lexer.OR).image as '||'
+      this.ACTION(() => this.symbolTable.pushOperator(operator))
       this.SUBRULE1(this.andExp)
+      this.ACTION(() => this.symbolTable.doOperation())
     })
   })
 
   public andExp = this.RULE('andExp', () => {
     this.SUBRULE(this.equalityExpression)
     this.OPTION(() => {
-      this.CONSUME(Lexer.AND)
+      const operator = this.CONSUME(Lexer.AND).image as '&&'
+      this.ACTION(() => this.symbolTable.pushOperator(operator))
       this.SUBRULE1(this.equalityExpression)
+      this.ACTION(() => this.symbolTable.doOperation())
     })
   })
 
   public equalityExpression = this.RULE('equalityExpression', () => {
     this.SUBRULE(this.comparisonExp)
     this.OPTION(() => {
-      this.OR([{ ALT: () => this.CONSUME(Lexer.IsEqual) }, { ALT: () => this.CONSUME(Lexer.IsNotEqual) }])
+      const operator = this.OR([
+        { ALT: () => this.CONSUME(Lexer.IsEqual).image as '==' },
+        { ALT: () => this.CONSUME(Lexer.IsNotEqual).image as '!=' },
+      ])
+      this.ACTION(() => this.symbolTable.pushOperator(operator))
       this.SUBRULE1(this.comparisonExp)
+      this.ACTION(() => this.symbolTable.doOperation())
     })
   })
 
   public comparisonExp = this.RULE('comparisonExp', () => {
     this.SUBRULE(this.additiveExpression)
     this.OPTION(() => {
-      this.OR([
-        { ALT: () => this.CONSUME(Lexer.GT) },
-        { ALT: () => this.CONSUME(Lexer.LT) },
-        { ALT: () => this.CONSUME(Lexer.GTE) },
-        { ALT: () => this.CONSUME(Lexer.LTE) },
+      const operator = this.OR([
+        { ALT: () => this.CONSUME(Lexer.GT).image as '>' },
+        { ALT: () => this.CONSUME(Lexer.LT).image as '<' },
+        { ALT: () => this.CONSUME(Lexer.GTE).image as '>=' },
+        { ALT: () => this.CONSUME(Lexer.LTE).image as '<=' },
       ])
+      this.ACTION(() => this.symbolTable.pushOperator(operator))
       this.SUBRULE1(this.additiveExpression)
+      this.ACTION(() => this.symbolTable.doOperation())
     })
   })
 
   public additiveExpression = this.RULE('additiveExpression', () => {
     this.SUBRULE(this.multiplicativeExpression)
+    this.ACTION(() => this.symbolTable.maybeDoOperation('+', '-'))
     this.OPTION(() => {
-      this.OR([{ ALT: () => this.CONSUME(Lexer.Plus) }, { ALT: () => this.CONSUME(Lexer.Minus) }])
+      const operator = this.OR([
+        { ALT: () => this.CONSUME(Lexer.Plus).image as '+' },
+        { ALT: () => this.CONSUME(Lexer.Minus).image as '-' },
+      ])
+      this.ACTION(() => this.symbolTable.pushOperator(operator))
       this.SUBRULE(this.additiveExpression)
     })
   })
 
   public multiplicativeExpression = this.RULE('multiplicativeExpression', () => {
     this.SUBRULE(this.atomicExpression)
+    this.ACTION(() => this.symbolTable.maybeDoOperation('*', '/'))
     this.OPTION(() => {
-      this.OR([{ ALT: () => this.CONSUME(Lexer.Times) }, { ALT: () => this.CONSUME(Lexer.Divide) }])
+      const operator = this.OR([
+        { ALT: () => this.CONSUME(Lexer.Times).image as '*' },
+        { ALT: () => this.CONSUME(Lexer.Divide).image as '/' },
+      ])
+      this.ACTION(() => this.symbolTable.pushOperator(operator))
       this.SUBRULE(this.multiplicativeExpression)
     })
   })
 
   public parenthesizedExpression = this.RULE('parenthesizedExpression', () => {
     this.CONSUME(Lexer.OParentheses)
+    this.ACTION(() => this.symbolTable.pushFakeFloor())
     this.SUBRULE(this.expression)
+    this.ACTION(() => this.symbolTable.popFakeFloor())
     this.CONSUME(Lexer.CParentheses)
   })
 
   public atomicExpression = this.RULE('atomicExpression', () => {
     this.OPTION(() => this.CONSUME(Lexer.Minus))
-    this.OR([
+    const id = this.OR([
       { ALT: () => this.SUBRULE(this.parenthesizedExpression) },
       { ALT: () => this.SUBRULE(this.literal) },
       { ALT: () => this.SUBRULE(this.funcCall) },
-      { ALT: () => this.SUBRULE(this.variable) },
+      {
+        ALT: () => {
+          const id = this.SUBRULE(this.variable)
+          this.ACTION(() => this.symbolTable.pushOperand(id))
+        },
+      },
     ])
   })
 
@@ -318,7 +354,7 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.OParentheses)
     this.MANY_SEP({
       SEP: Lexer.Comma,
-      DEF: () => this.OR([{ ALT: () => this.SUBRULE(this.variable) }, { ALT: () => this.SUBRULE(this.literal) }]),
+      DEF: () => this.SUBRULE(this.expression),
     })
     this.CONSUME(Lexer.CParentheses)
   })

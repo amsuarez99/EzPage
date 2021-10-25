@@ -5,9 +5,8 @@ int abcd = 12
 int something = 1234
 
 string something(int hola, int hola2) {
-  const result = abcd / something + hola
-  string hello = "hello"
-  return hello
+  int mmmmm = abcd / something + hola
+  return
 }
 
 void render() {

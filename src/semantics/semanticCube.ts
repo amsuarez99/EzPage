@@ -189,6 +189,33 @@ const logicalRecord: OperatorRecord = {
   },
 }
 
+const assignmentRecord: OperatorRecord = {
+  int: {
+    int: 'int',
+    float: 'int',
+    string: 'Type Error',
+    bool: 'Type Error',
+  },
+  float: {
+    int: 'float',
+    float: 'float',
+    string: 'Type Error',
+    bool: 'Type Error',
+  },
+  string: {
+    int: 'Type Error',
+    float: 'Type Error',
+    string: 'string',
+    bool: 'Type Error',
+  },
+  bool: {
+    int: 'Type Error',
+    float: 'Type Error',
+    string: 'Type Error',
+    bool: 'bool',
+  },
+}
+
 const semanticCube: SemanticCube = {
   '+': plusRecord,
   '-': minusRecord,
@@ -202,6 +229,7 @@ const semanticCube: SemanticCube = {
   '!=': equalityRecord,
   '||': logicalRecord,
   '&&': logicalRecord,
+  '=': assignmentRecord,
 }
 
 export { semanticCube }
