@@ -1,0 +1,133 @@
+changed current func: global
+Added funcEntry: global
+{
+  "type": "void"
+}
+Var Table for global not found... creating varsTable
+Added var __hola__ to varsTable of global
+{
+  "type": "string",
+  "addr": 0
+}
+Added var __abcd__ to varsTable of global
+{
+  "type": "int",
+  "addr": 1
+}
+Added var __something__ to varsTable of global
+{
+  "type": "int",
+  "addr": 2
+}
+changed current func: something
+Added funcEntry: something
+{
+  "type": "string"
+}
+Added args to func something
+[
+  "int",
+  "int"
+]
+Var Table for something not found... creating varsTable
+Added var __hola__ to varsTable of something
+{
+  "type": "int",
+  "addr": 3
+}
+Added var __hola2__ to varsTable of something
+{
+  "type": "int",
+  "addr": 4
+}
+Added var __mmmmm__ to varsTable of something
+{
+  "type": "int",
+  "addr": 5
+}
+pushed to operand stack: [mmmmm, int]
+pushed to operator stack: =
+pushed to operand stack: [abcd, int]
+pushed to operator stack: /
+pushed fake floor
+pushed to operand stack: [something, int]
+pushed to operator stack: +
+pushed to operand stack: [hola, int]
+pushed __temporal__ to operandStack:
+[
+  "t999",
+  "int"
+]
+***Added instruction***
+{
+  "operation": "+",
+  "lhs": "something",
+  "rhs": "hola",
+  "result": "t999"
+}
+Popped fake floor
+pushed __temporal__ to operandStack:
+[
+  "t1000",
+  "float"
+]
+***Added instruction***
+{
+  "operation": "/",
+  "lhs": "abcd",
+  "rhs": "t999",
+  "result": "t1000"
+}
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": "t1000",
+  "result": "mmmmm"
+}
+Added var __myVar__ to varsTable of something
+{
+  "type": "int",
+  "addr": 6
+}
+pushed fake floor
+Added literal to stack
+{
+  "value": "5",
+  "type": "int"
+}
+pushed to operator stack: ==
+pushed to operand stack: [mmmmm, int]
+pushed __temporal__ to operandStack:
+[
+  "t1001",
+  "bool"
+]
+***Added instruction***
+{
+  "operation": "==",
+  "lhs": "5",
+  "rhs": "mmmmm",
+  "result": "t1001"
+}
+Popped fake floor
+***Added instruction***
+{
+  "operation": "gotoF",
+  "lhs": "t1001",
+  "result": "pending_jump"
+}
+Added var __myVar__ to varsTable of something
+{
+  "type": "int",
+  "addr": 6
+}
+pushed to operand stack: [myVar, int]
+pushed to operator stack: =
+pushed to operand stack: [mmmmm, int]
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": "mmmmm",
+  "result": "myVar"
+}
+Deleted varsTable for funcEntry: something
