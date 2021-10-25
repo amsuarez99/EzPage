@@ -153,7 +153,7 @@ class EzParser extends EmbeddedActionsParser {
           const operator = this.CONSUME(Lexer.Equals).image as '='
           this.ACTION(() => this.symbolTable.pushOperator(operator))
           this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
-          this.ACTION(() => this.symbolTable.doOperation())
+          this.ACTION(() => this.symbolTable.doAssignmentOperation())
         })
       },
       SEP: Lexer.Comma,
@@ -174,13 +174,36 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public literal = this.RULE('literal', () => {
-    const value = this.OR([
-      { ALT: () => this.CONSUME(Lexer.IntLiteral).image },
-      { ALT: () => this.CONSUME(Lexer.FloatLiteral).image },
-      { ALT: () => this.CONSUME(Lexer.StringLiteral).image },
-      { ALT: () => this.CONSUME(Lexer.BoolLiteral).image },
+    return this.OR([
+      {
+        ALT: () => {
+          const value = this.CONSUME(Lexer.IntLiteral).image
+          const type = 'int' as NonVoidType
+          return { value, type }
+        },
+      },
+      {
+        ALT: () => {
+          const value = this.CONSUME(Lexer.FloatLiteral).image
+          const type = 'float' as NonVoidType
+          return { value, type }
+        },
+      },
+      {
+        ALT: () => {
+          const value = this.CONSUME(Lexer.StringLiteral).image
+          const type = 'string' as NonVoidType
+          return { value, type }
+        },
+      },
+      {
+        ALT: () => {
+          const value = this.CONSUME(Lexer.BoolLiteral).image
+          const type = 'bool' as NonVoidType
+          return { value, type }
+        },
+      },
     ])
-    return value
   })
 
   public arrayIndexation = this.RULE('arrayIndexation', () => {
@@ -202,7 +225,7 @@ class EzParser extends EmbeddedActionsParser {
     const operator = this.CONSUME(Lexer.Equals).image as '='
     this.ACTION(() => this.symbolTable.pushOperator(operator))
     this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
-    this.ACTION(() => this.symbolTable.doOperation())
+    this.ACTION(() => this.symbolTable.doAssignmentOperation())
   })
 
   public expression = this.RULE('expression', () => {
@@ -288,9 +311,14 @@ class EzParser extends EmbeddedActionsParser {
 
   public atomicExpression = this.RULE('atomicExpression', () => {
     this.OPTION(() => this.CONSUME(Lexer.Minus))
-    const id = this.OR([
+    this.OR([
       { ALT: () => this.SUBRULE(this.parenthesizedExpression) },
-      { ALT: () => this.SUBRULE(this.literal) },
+      {
+        ALT: () => {
+          const { value, type } = this.SUBRULE(this.literal)
+          this.ACTION(() => this.symbolTable.pushLiteral(value, type))
+        },
+      },
       { ALT: () => this.SUBRULE(this.funcCall) },
       {
         ALT: () => {
@@ -314,6 +342,7 @@ class EzParser extends EmbeddedActionsParser {
   public ifStatement = this.RULE('ifStatement', () => {
     this.CONSUME(Lexer.If)
     this.SUBRULE(this.parenthesizedExpression)
+    this.ACTION(() => this.symbolTable.addPendingJump())
     this.SUBRULE(this.block)
     this.OPTION(() => {
       this.CONSUME(Lexer.Else)

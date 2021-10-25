@@ -1,10 +1,14 @@
-import { Operation, Operator } from '.'
+import { JumpOperation, Operation, Operator } from '.'
 
 const isSimpleOperation = (operation: Operation): operation is Operator => {
   return !['gotoT', 'gotoF', 'goto', 'print'].includes(operation)
 }
 
-export { isSimpleOperation }
+const isJumpOperation = (operation: Operation): operation is JumpOperation => {
+  return ['gotoT', 'gotoF', 'goto'].includes(operation)
+}
+
+export { isSimpleOperation, isJumpOperation }
 
 // Memory Map
 /*

@@ -5,36 +5,41 @@ import {
   Kind,
   NonVoidType,
   OperandStackItem,
-  Operation,
   Operator,
   semanticCube,
   Type,
   VarTable,
   VarTableEntry,
+  LiteralTable,
 } from '../semantics'
 import { log } from '../logger'
-import { Queue, Stack } from 'mnemonist'
-import { isSimpleOperation } from './utils'
+import { Stack } from 'mnemonist'
 
 class SymbolTable {
   funcTable: FuncTable
   currentFunc: string
   addressCounter: number
   temporalCounter: number
+  literalCounter: number
   // '(' is for fake floor
   operatorStack: Stack<Operator | '('>
   operandStack: Stack<OperandStackItem>
-  instructionList: Queue<Instruction>
+  jumpStack: Stack<number>
+  instructionList: Instruction[]
+  literalTable: LiteralTable
 
   constructor() {
     this.funcTable = {}
     this.currentFunc = 'global'
     this.addFunc('global', 'void')
+    this.literalCounter = 4000
     this.addressCounter = 0
     this.temporalCounter = 999
     this.operatorStack = new Stack()
     this.operandStack = new Stack()
-    this.instructionList = new Queue()
+    this.jumpStack = new Stack()
+    this.instructionList = []
+    this.literalTable = {}
   }
 
   getCurrentState(): {
@@ -197,50 +202,58 @@ class SymbolTable {
     })
   }
 
-  doOperation(): void {
-    if (!this.operatorStack.peek()) throw new Error('Error in expression, operand stack empty')
-    const operator = this.operatorStack.pop() as Operator
-    if (!this.operandStack.peek()) throw new Error('Error in expression, operand stack empty')
-    const right = this.operandStack.pop() as OperandStackItem
-    if (!this.operandStack.peek()) throw new Error('Error in expression, operand stack empty')
-    const left = this.operandStack.pop() as OperandStackItem
-    const quad = this.generateQuadruple(operator, left, right)
-    this.instructionList.enqueue(quad)
-    log('***Added instruction***', quad)
+  maybeDoOperation(...operators: Operator[]): void {
+    const hasPendingOperation = operators.some((op) => op === this.operatorStack.peek())
+    if (hasPendingOperation) this.doOperation()
   }
 
-  generateQuadruple(operation: Operation, leftOperand: OperandStackItem, rightOperand: OperandStackItem): Instruction {
-    const [rightOperandName, rightOperandType] = rightOperand
-    const [leftOperandName, leftOperandType] = leftOperand
-    if (!isSimpleOperation(operation))
-      throw new Error(`Tried generating quad for: ${operation}. Complex quadruples not implemented yet`)
-    const resultType = semanticCube[operation][leftOperandType][rightOperandType]
+  doOperation(): void {
+    const operator = this.safePop(this.operatorStack) as Operator
+    const right = this.safePop(this.operandStack)
+    const left = this.safePop(this.operandStack)
+    const [rightOperandName, rightOperandType] = right
+    const [leftOperandName, leftOperandType] = left
+    const resultType = semanticCube[operator][leftOperandType][rightOperandType]
     if (resultType === 'Type Error') throw new Error('Type Mismatch')
-    if (operation === '=') {
-      const quadruple: Instruction = {
-        operation,
-        lhs: rightOperandName,
-        result: leftOperandName,
-      }
-      return quadruple
-    }
 
     const quadruple: Instruction = {
-      operation,
+      operation: operator,
       lhs: leftOperandName,
       rhs: rightOperandName,
       result: `t${this.temporalCounter++}`,
     }
+
     // push the temporal to the operand stack
     const temp = [`t${this.temporalCounter - 1}`, resultType] as OperandStackItem
     this.operandStack.push(temp)
     log(`pushed __temporal__ to operandStack:`, temp)
-    return quadruple
+
+    this.instructionList.push(quadruple)
+    log('***Added instruction***', quadruple)
   }
 
-  maybeDoOperation(...operators: Operator[]): void {
-    const hasPendingOperation = operators.some((op) => op === this.operatorStack.peek())
-    if (hasPendingOperation) this.doOperation()
+  doAssignmentOperation(): void {
+    const operator = this.safePop(this.operatorStack, '=') as Operator
+    const right = this.safePop(this.operandStack)
+    const left = this.safePop(this.operandStack)
+    const [rightOperandName, rightOperandType] = right
+    const [leftOperandName, leftOperandType] = left
+    const resultType = semanticCube[operator][leftOperandType][rightOperandType]
+    if (resultType === 'Type Error') throw new Error('Type Mismatch')
+    const quadruple: Instruction = {
+      operation: operator,
+      lhs: rightOperandName,
+      result: leftOperandName,
+    }
+
+    this.instructionList.push(quadruple)
+    log('***Added instruction***', quadruple)
+  }
+
+  pushLiteral(value: string, type: NonVoidType): void {
+    this.getLiteralAddr(value)
+    this.operandStack.push([value, type])
+    log('Added literal to stack', { value, type })
   }
 
   pushOperand(identifier: string): void {
@@ -261,11 +274,36 @@ class SymbolTable {
   }
 
   popFakeFloor(): void {
-    const operator = this.operatorStack.peek()
-    if (!operator) throw new Error(`Error in operator stack: Expected '(', but stack is empty`)
-    if (operator !== '(') throw new Error(`Error in operator stack: Expected '(', found ${operator}`)
-    this.operatorStack.pop()
+    this.safePop(this.operatorStack, '(')
     log('Popped fake floor')
+  }
+
+  safePop<T>(stack: Stack<T>, expectedItem?: T): T {
+    if (expectedItem && stack.peek() !== expectedItem)
+      throw new Error(`Error in operator stack: Expected ${expectedItem}, but found ${stack.peek()}`)
+    if (!stack.peek()) throw new Error('Tried to pop an item in a stack, but found no items')
+    const stackItem = stack.pop() as T
+    return stackItem
+  }
+
+  // Flow Control
+  addPendingJump(): void {
+    const [conditionName, conditionType] = this.safePop(this.operandStack)
+    if (conditionType !== 'bool') throw new Error(`Expecting condition type to be boolean, found: ${conditionType}`)
+
+    const quad: Instruction = {
+      operation: 'gotoF',
+      lhs: conditionName,
+      result: 'pending_jump',
+    }
+    this.instructionList.push(quad)
+    this.jumpStack.push(this.instructionList.length)
+    log('***Added instruction***', quad)
+  }
+
+  getLiteralAddr(literal: string): number {
+    if (!this.literalTable[literal]) this.literalTable[literal] = this.literalCounter++
+    return this.literalTable[literal]
   }
 }
 
