@@ -1,0 +1,24 @@
+page MyFirstMFPage
+
+string hola = 44
+int abcd = 12
+int something = 1234
+
+string something(int hola, int hola2) {
+  int mmmmm = abcd / (something + hola)
+  int myVar
+  while(myVar < 70) {
+    myVar = myVar + 1
+  }
+  for(myVar = 100 to 200) {
+    something = something / something
+  }
+  return
+}
+
+void render() {
+  container() {
+    heading(size: 'h1', text: "hello 1")
+    heading(size: 'h2', text: "hello 2")
+  }
+}

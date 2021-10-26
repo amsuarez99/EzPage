@@ -15,6 +15,7 @@ import {
 import { log } from '../logger'
 import { Stack } from 'mnemonist'
 import { GotoOperation } from './types'
+import { isNumerical } from './utils'
 
 class SymbolTable {
   funcTable: FuncTable
@@ -329,6 +330,153 @@ class SymbolTable {
     if (this.instructionList[instructionNo].result !== 'pending_jump')
       throw new Error('Weird Error: expected to fill a pending jump but it was not labeled as such')
     this.instructionList[instructionNo].result = this.instructionList.length.toString()
+  }
+
+  // Loops
+  handleWhileStart(): void {
+    const begin = this.instructionList.length
+    this.jumpStack.push(begin)
+  }
+
+  handleWhileEnd(): void {
+    const falseJump = this.safePop(this.jumpStack)
+    const conditionBegin = this.safePop(this.jumpStack).toString()
+    const quad: Instruction = {
+      operation: 'goto',
+      result: conditionBegin,
+    }
+    this.instructionList.push(quad)
+    log('***Added instruction***', quad)
+    this.fillPendingJump(falseJump)
+  }
+
+  storeControlVar(identifier: string): void {
+    const varEntry = this.getVarEntry(identifier)
+    if (!varEntry) throw new Error('Unexisting identifier in for loop')
+    if (!isNumerical(varEntry.type))
+      throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${varEntry.type}`)
+    this.operandStack.push([identifier, varEntry.type])
+  }
+
+  handleControlAssignment(): string {
+    const [exprName, exprType] = this.safePop(this.operandStack)
+    if (!isNumerical(exprType))
+      throw new Error(`Expected expression to be of type 'int' or 'float', found: ${exprType} `)
+
+    const controlVariable = this.safePop(this.operandStack)
+    if (!controlVariable) throw new Error(`Weird error: Expected to find control variable but found ${controlVariable}`)
+    const [controlName, controlType] = controlVariable
+
+    const resType = semanticCube['='][controlType][exprType]
+    if (resType === 'Type Error') throw new Error('Type Mismatch')
+
+    const quad: Instruction = {
+      operation: '=',
+      lhs: exprName,
+      result: controlName,
+    }
+
+    this.instructionList.push(quad)
+    log('***Added instruction***', quad)
+    return controlName
+  }
+
+  handleControlCompare(controlName: string): void {
+    // The limit should be in the operand stack, we get that and add it to the localVariables
+    const [expr, exprType] = this.safePop(this.operandStack)
+    if (!isNumerical(exprType))
+      throw new Error(`Expected expression to be of type 'int' or 'float', found: ${exprType} `)
+
+    // Take a snapshot of the upper limit, so that we don't modify it accidentally
+    const upperLim = `t${this.temporalCounter++}`
+    const quadruple: Instruction = {
+      operation: '=',
+      lhs: expr,
+      result: upperLim,
+    }
+
+    this.instructionList.push(quadruple)
+    log('***Added instruction***', quadruple)
+
+    const temp = `t${this.temporalCounter++}`
+    const comparisonQuad: Instruction = {
+      operation: '<',
+      lhs: controlName,
+      rhs: upperLim,
+      result: temp,
+    }
+
+    this.instructionList.push(comparisonQuad)
+    log('***Added instruction***', comparisonQuad)
+
+    this.jumpStack.push(this.instructionList.length - 1)
+
+    const falseJump: Instruction = {
+      operation: 'gotoF',
+      lhs: temp,
+      result: 'pending_jump',
+    }
+
+    this.instructionList.push(falseJump)
+    log('***Added instruction***', falseJump)
+
+    this.jumpStack.push(this.instructionList.length - 1)
+  }
+
+  storeStep(): string {
+    const [exprName, exprType] = this.safePop(this.operandStack)
+
+    if (!isNumerical(exprType))
+      throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${exprType}`)
+
+    // Take a snapshot of the step
+    const temp = `t${this.temporalCounter++}`
+    const quad: Instruction = {
+      operation: '=',
+      lhs: exprName,
+      result: temp,
+    }
+
+    this.instructionList.push(quad)
+    log('***Added instruction***', quad)
+    return temp
+  }
+
+  handleForEnd(controlName: string, stepDir = this.getLiteralAddr('1').toString()): void {
+    // increment the control variable
+    const incrementTemp = `t${this.temporalCounter++}`
+    const temporalIncrement: Instruction = {
+      operation: '+',
+      lhs: controlName,
+      rhs: stepDir,
+      result: incrementTemp,
+    }
+
+    this.instructionList.push(temporalIncrement)
+    log('***Added instruction***', temporalIncrement)
+
+    // increment the control variable
+    const incrementCommit: Instruction = {
+      operation: '=',
+      lhs: incrementTemp,
+      result: controlName,
+    }
+
+    this.instructionList.push(incrementCommit)
+    log('***Added instruction***', incrementCommit)
+
+    const falseJump = this.safePop(this.jumpStack)
+    const destination = this.safePop(this.jumpStack).toString()
+
+    const jumpQuad: Instruction = {
+      operation: 'goto',
+      result: destination,
+    }
+
+    this.instructionList.push(jumpQuad)
+    log('***Added instruction***', jumpQuad)
+
+    this.fillPendingJump(falseJump)
   }
 }
 
