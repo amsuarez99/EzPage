@@ -357,24 +357,32 @@ class EzParser extends EmbeddedActionsParser {
 
   public whileLoop = this.RULE('whileLoop', () => {
     this.CONSUME(Lexer.While)
+    this.ACTION(() => this.symbolTable.handleWhileStart())
     this.SUBRULE(this.parenthesizedExpression)
+    this.ACTION(() => this.symbolTable.handleCondition())
     this.SUBRULE(this.block)
+    this.ACTION(() => this.symbolTable.handleWhileEnd())
   })
 
   public forLoop = this.RULE('forLoop', () => {
     this.CONSUME(Lexer.For)
     this.CONSUME(Lexer.OParentheses)
-    this.CONSUME(Lexer.Id)
+    const id = this.CONSUME(Lexer.Id).image
+    this.ACTION(() => this.symbolTable.storeControlVar(id))
     this.CONSUME(Lexer.Equals)
     this.SUBRULE(this.expression)
+    this.ACTION(() => this.symbolTable.handleControlAssignment())
     this.CONSUME(Lexer.To)
     this.SUBRULE1(this.expression)
-    this.OPTION(() => {
+    const stepDir = this.OPTION(() => {
       this.CONSUME(Lexer.Step)
       this.SUBRULE2(this.expression)
-    })
+      return this.ACTION(() => this.symbolTable.storeStep())
+    }) as string | undefined
+    this.ACTION(() => this.symbolTable.handleControlCompare(id))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.block)
+    this.ACTION(() => this.symbolTable.handleForEnd(id, stepDir))
   })
 
   public return = this.RULE('return', () => {

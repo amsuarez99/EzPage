@@ -20,7 +20,7 @@ function parseInput(text: string) {
 
 try {
   // read contents of the file
-  const data = fs.readFileSync(path.resolve(__dirname, '../inputs/flowControl.txt'), { encoding: 'utf-8' })
+  const data = fs.readFileSync(path.resolve(__dirname, '../inputs/loops.txt'), { encoding: 'utf-8' })
   parseInput(data)
 } catch (err) {
   console.error(err)

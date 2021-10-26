@@ -3,6 +3,7 @@ Added funcEntry: global
 {
   "type": "void"
 }
+[]
 Var Table for global not found... creating varsTable
 Added var __hola__ to varsTable of global
 {
@@ -90,13 +91,13 @@ Added var __myVar__ to varsTable of something
   "addr": 6
 }
 pushed fake floor
+pushed to operand stack: [myVar, int]
+pushed to operator stack: <
 Added literal to stack
 {
-  "value": "5",
+  "value": "70",
   "type": "int"
 }
-pushed to operator stack: ==
-pushed to operand stack: [mmmmm, int]
 pushed __temporal__ to operandStack:
 [
   "t1001",
@@ -104,9 +105,9 @@ pushed __temporal__ to operandStack:
 ]
 ***Added instruction***
 {
-  "operation": "==",
-  "lhs": "5",
-  "rhs": "mmmmm",
+  "operation": "<",
+  "lhs": "myVar",
+  "rhs": "4000",
   "result": "t1001"
 }
 Popped fake floor
@@ -116,18 +117,204 @@ Popped fake floor
   "lhs": "t1001",
   "result": "pending_jump"
 }
-Added var __myVar__ to varsTable of something
-{
-  "type": "int",
-  "addr": 6
-}
 pushed to operand stack: [myVar, int]
 pushed to operator stack: =
-pushed to operand stack: [mmmmm, int]
+pushed to operand stack: [myVar, int]
+pushed to operator stack: +
+Added literal to stack
+{
+  "value": "1",
+  "type": "int"
+}
+pushed __temporal__ to operandStack:
+[
+  "t1002",
+  "int"
+]
+***Added instruction***
+{
+  "operation": "+",
+  "lhs": "myVar",
+  "rhs": "4001",
+  "result": "t1002"
+}
 ***Added instruction***
 {
   "operation": "=",
-  "lhs": "mmmmm",
+  "lhs": "t1002",
   "result": "myVar"
 }
+***Added instruction***
+{
+  "operation": "goto",
+  "result": "3"
+}
+Added literal to stack
+{
+  "value": "100",
+  "type": "int"
+}
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": "4002",
+  "result": "myVar"
+}
+Added literal to stack
+{
+  "value": "200",
+  "type": "int"
+}
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": "4003",
+  "result": "t1003"
+}
+***Added instruction***
+{
+  "operation": "<",
+  "lhs": "myVar",
+  "rhs": "t1003",
+  "result": "t1004"
+}
+***Added instruction***
+{
+  "operation": "gotoF",
+  "lhs": "t1004",
+  "result": "pending_jump"
+}
+pushed to operand stack: [something, int]
+pushed to operator stack: =
+pushed to operand stack: [something, int]
+pushed to operator stack: /
+pushed to operand stack: [something, int]
+pushed __temporal__ to operandStack:
+[
+  "t1005",
+  "float"
+]
+***Added instruction***
+{
+  "operation": "/",
+  "lhs": "something",
+  "rhs": "something",
+  "result": "t1005"
+}
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": "t1005",
+  "result": "something"
+}
+***Added instruction***
+{
+  "operation": "+",
+  "lhs": "myVar",
+  "rhs": "4001",
+  "result": "t1006"
+}
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": "t1006",
+  "result": "myVar"
+}
+***Added instruction***
+{
+  "operation": "goto",
+  "result": "10"
+}
 Deleted varsTable for funcEntry: something
+[
+  {
+    "operation": "+",
+    "lhs": "something",
+    "rhs": "hola",
+    "result": "t999"
+  },
+  {
+    "operation": "/",
+    "lhs": "abcd",
+    "rhs": "t999",
+    "result": "t1000"
+  },
+  {
+    "operation": "=",
+    "lhs": "t1000",
+    "result": "mmmmm"
+  },
+  {
+    "operation": "<",
+    "lhs": "myVar",
+    "rhs": "4000",
+    "result": "t1001"
+  },
+  {
+    "operation": "gotoF",
+    "lhs": "t1001",
+    "result": "8"
+  },
+  {
+    "operation": "+",
+    "lhs": "myVar",
+    "rhs": "4001",
+    "result": "t1002"
+  },
+  {
+    "operation": "=",
+    "lhs": "t1002",
+    "result": "myVar"
+  },
+  {
+    "operation": "goto",
+    "result": "3"
+  },
+  {
+    "operation": "=",
+    "lhs": "4002",
+    "result": "myVar"
+  },
+  {
+    "operation": "=",
+    "lhs": "4003",
+    "result": "t1003"
+  },
+  {
+    "operation": "<",
+    "lhs": "myVar",
+    "rhs": "t1003",
+    "result": "t1004"
+  },
+  {
+    "operation": "gotoF",
+    "lhs": "t1004",
+    "result": "17"
+  },
+  {
+    "operation": "/",
+    "lhs": "something",
+    "rhs": "something",
+    "result": "t1005"
+  },
+  {
+    "operation": "=",
+    "lhs": "t1005",
+    "result": "something"
+  },
+  {
+    "operation": "+",
+    "lhs": "myVar",
+    "rhs": "4001",
+    "result": "t1006"
+  },
+  {
+    "operation": "=",
+    "lhs": "t1006",
+    "result": "myVar"
+  },
+  {
+    "operation": "goto",
+    "result": "10"
+  }
+]
