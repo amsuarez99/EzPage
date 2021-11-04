@@ -16,43 +16,38 @@ import { log } from '../logger'
 import { Stack } from 'mnemonist'
 import { GotoOperation } from './types'
 import { isNumerical } from './utils'
+import MemoryMapper from './memoryMapper'
 
 class SymbolTable {
   funcTable: FuncTable
   currentFunc: string
-  addressCounter: number
-  temporalCounter: number
-  literalCounter: number
   // '(' is for fake floor
   operatorStack: Stack<Operator | '('>
   operandStack: Stack<OperandStackItem>
   jumpStack: Stack<number>
   instructionList: Instruction[]
   literalTable: LiteralTable
+  memoryMapper: MemoryMapper
 
   constructor() {
     this.funcTable = {}
     this.currentFunc = 'global'
     this.addFunc('global', 'void')
-    this.literalCounter = 4000
-    this.addressCounter = 0
-    this.temporalCounter = 999
     this.operatorStack = new Stack()
     this.operandStack = new Stack()
     this.jumpStack = new Stack()
     this.instructionList = []
     this.literalTable = {}
+    this.memoryMapper = new MemoryMapper()
   }
 
   getCurrentState(): {
     funcTable: FuncTable
-    addressCounter: number
     operatorStack: Stack<Operator | '('>
     operandStack: Stack<OperandStackItem>
   } {
     return {
       funcTable: this.funcTable,
-      addressCounter: this.addressCounter,
       operatorStack: this.operatorStack,
       operandStack: this.operandStack,
     }
@@ -194,10 +189,11 @@ class SymbolTable {
       if (this.getVarEntry(name, false)) throw new Error('Duplicate Identifier')
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const varTable = this.getVarTable()!
+      const scope = this.currentFunc === 'global' ? 'global' : 'local'
       const varEntry = {
         type,
         kind,
-        addr: this.addressCounter++,
+        addr: this.memoryMapper.getAddrFor(type, scope),
       }
       varTable[name] = varEntry
       log(`Added var __${name}__ to varsTable of ${this.currentFunc}`, varEntry)
@@ -213,20 +209,21 @@ class SymbolTable {
     const operator = this.safePop(this.operatorStack) as Operator
     const right = this.safePop(this.operandStack)
     const left = this.safePop(this.operandStack)
-    const [rightOperandName, rightOperandType] = right
-    const [leftOperandName, leftOperandType] = left
+    const [rightOperandAddr, rightOperandType] = right
+    const [leftOperandAddr, leftOperandType] = left
     const resultType = semanticCube[operator][leftOperandType][rightOperandType]
     if (resultType === 'Type Error') throw new Error('Type Mismatch')
 
+    const temporalAddr = this.memoryMapper.getAddrFor(resultType, 'temporal')
     const quadruple: Instruction = {
       operation: operator,
-      lhs: leftOperandName,
-      rhs: rightOperandName,
-      result: `t${this.temporalCounter++}`,
+      lhs: leftOperandAddr,
+      rhs: rightOperandAddr,
+      result: temporalAddr,
     }
 
     // push the temporal to the operand stack
-    const temp = [`t${this.temporalCounter - 1}`, resultType] as OperandStackItem
+    const temp = [temporalAddr, resultType] as OperandStackItem
     this.operandStack.push(temp)
     log(`pushed __temporal__ to operandStack:`, temp)
 
@@ -238,14 +235,14 @@ class SymbolTable {
     const operator = this.safePop(this.operatorStack, '=') as Operator
     const right = this.safePop(this.operandStack)
     const left = this.safePop(this.operandStack)
-    const [rightOperandName, rightOperandType] = right
-    const [leftOperandName, leftOperandType] = left
+    const [rightOperandAddr, rightOperandType] = right
+    const [leftOperandAddr, leftOperandType] = left
     const resultType = semanticCube[operator][leftOperandType][rightOperandType]
     if (resultType === 'Type Error') throw new Error('Type Mismatch')
     const quadruple: Instruction = {
       operation: operator,
-      lhs: rightOperandName,
-      result: leftOperandName,
+      lhs: rightOperandAddr,
+      result: leftOperandAddr,
     }
 
     this.instructionList.push(quadruple)
@@ -253,16 +250,16 @@ class SymbolTable {
   }
 
   pushLiteral(value: string, type: NonVoidType): void {
-    const addr = this.getLiteralAddr(value).toString()
+    const addr = this.getLiteralAddr(value, type)
     this.operandStack.push([addr, type])
     log('Added literal to stack', { value, type })
   }
 
   pushOperand(identifier: string): void {
     if (!this.getVarEntry(identifier)) throw new Error('Unexisting identifier')
-    const { type } = this.getVarEntry(identifier) as VarTableEntry
-    this.operandStack.push([identifier, type])
-    log(`pushed to operand stack: [${identifier}, ${type}]`)
+    const { type, addr } = this.getVarEntry(identifier) as VarTableEntry
+    this.operandStack.push([addr, type])
+    log(`pushed to operand stack: [${identifier} with addr ${addr} of type ${type}]`)
   }
 
   pushOperator(operator: Operator): void {
@@ -288,8 +285,8 @@ class SymbolTable {
     return stackItem
   }
 
-  getLiteralAddr(literal: string): number {
-    if (!this.literalTable[literal]) this.literalTable[literal] = this.literalCounter++
+  getLiteralAddr(literal: string, type: NonVoidType): number {
+    if (!this.literalTable[literal]) this.literalTable[literal] = this.memoryMapper.getAddrFor(type, 'constant')
     return this.literalTable[literal]
   }
 
@@ -301,7 +298,7 @@ class SymbolTable {
     const quad: Instruction = {
       operation: 'gotoF',
       lhs: conditionName,
-      result: 'pending_jump',
+      result: -1,
     }
 
     this.instructionList.push(quad)
@@ -313,7 +310,7 @@ class SymbolTable {
     const falseCondition = this.safePop(this.jumpStack)
     const quad: Instruction = {
       operation: 'goto',
-      result: 'pending_jump',
+      result: -1,
     }
     this.instructionList.push(quad)
     log('***Added instruction***', quad)
@@ -327,9 +324,9 @@ class SymbolTable {
   }
 
   fillPendingJump(instructionNo: number): void {
-    if (this.instructionList[instructionNo].result !== 'pending_jump')
+    if (this.instructionList[instructionNo].result !== -1)
       throw new Error('Weird Error: expected to fill a pending jump but it was not labeled as such')
-    this.instructionList[instructionNo].result = this.instructionList.length.toString()
+    this.instructionList[instructionNo].result = this.instructionList.length
   }
 
   // Loops
@@ -340,7 +337,7 @@ class SymbolTable {
 
   handleWhileEnd(): void {
     const falseJump = this.safePop(this.jumpStack)
-    const conditionBegin = this.safePop(this.jumpStack).toString()
+    const conditionBegin = this.safePop(this.jumpStack)
     const quad: Instruction = {
       operation: 'goto',
       result: conditionBegin,
@@ -353,19 +350,20 @@ class SymbolTable {
   storeControlVar(identifier: string): void {
     const varEntry = this.getVarEntry(identifier)
     if (!varEntry) throw new Error('Unexisting identifier in for loop')
-    if (!isNumerical(varEntry.type))
-      throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${varEntry.type}`)
-    this.operandStack.push([identifier, varEntry.type])
+    const { type, addr } = varEntry
+    if (!isNumerical(type))
+      throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${type}`)
+    this.operandStack.push([addr, type])
   }
 
-  handleControlAssignment(): string {
+  handleControlAssignment(): number {
     const [exprName, exprType] = this.safePop(this.operandStack)
     if (!isNumerical(exprType))
       throw new Error(`Expected expression to be of type 'int' or 'float', found: ${exprType} `)
 
     const controlVariable = this.safePop(this.operandStack)
     if (!controlVariable) throw new Error(`Weird error: Expected to find control variable but found ${controlVariable}`)
-    const [controlName, controlType] = controlVariable
+    const [controlAddr, controlType] = controlVariable
 
     const resType = semanticCube['='][controlType][exprType]
     if (resType === 'Type Error') throw new Error('Type Mismatch')
@@ -373,35 +371,37 @@ class SymbolTable {
     const quad: Instruction = {
       operation: '=',
       lhs: exprName,
-      result: controlName,
+      result: controlAddr,
     }
 
     this.instructionList.push(quad)
     log('***Added instruction***', quad)
-    return controlName
+    return controlAddr
   }
 
   handleControlCompare(controlName: string): void {
     // The limit should be in the operand stack, we get that and add it to the localVariables
-    const [expr, exprType] = this.safePop(this.operandStack)
+    const [exprAddr, exprType] = this.safePop(this.operandStack)
     if (!isNumerical(exprType))
       throw new Error(`Expected expression to be of type 'int' or 'float', found: ${exprType} `)
 
     // Take a snapshot of the upper limit, so that we don't modify it accidentally
-    const upperLim = `t${this.temporalCounter++}`
+    const upperLim = this.memoryMapper.getAddrFor(exprType, 'temporal')
     const quadruple: Instruction = {
       operation: '=',
-      lhs: expr,
+      lhs: exprAddr,
       result: upperLim,
     }
 
     this.instructionList.push(quadruple)
     log('***Added instruction***', quadruple)
 
-    const temp = `t${this.temporalCounter++}`
+    const { addr: controlAddr } = this.getVarEntry(controlName)!
+
+    const temp = this.memoryMapper.getAddrFor(exprType, 'temporal')
     const comparisonQuad: Instruction = {
       operation: '<',
-      lhs: controlName,
+      lhs: controlAddr,
       rhs: upperLim,
       result: temp,
     }
@@ -414,7 +414,7 @@ class SymbolTable {
     const falseJump: Instruction = {
       operation: 'gotoF',
       lhs: temp,
-      result: 'pending_jump',
+      result: -1,
     }
 
     this.instructionList.push(falseJump)
@@ -423,17 +423,17 @@ class SymbolTable {
     this.jumpStack.push(this.instructionList.length - 1)
   }
 
-  storeStep(): string {
-    const [exprName, exprType] = this.safePop(this.operandStack)
+  storeStep(): number {
+    const [exprAddr, exprType] = this.safePop(this.operandStack)
 
     if (!isNumerical(exprType))
       throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${exprType}`)
 
     // Take a snapshot of the step
-    const temp = `t${this.temporalCounter++}`
+    const temp = this.memoryMapper.getAddrFor(exprType, 'temporal')
     const quad: Instruction = {
       operation: '=',
-      lhs: exprName,
+      lhs: exprAddr,
       result: temp,
     }
 
@@ -442,12 +442,14 @@ class SymbolTable {
     return temp
   }
 
-  handleForEnd(controlName: string, stepDir = this.getLiteralAddr('1').toString()): void {
+  handleForEnd(controlName: string, stepDir = this.getLiteralAddr('1', 'int')): void {
     // increment the control variable
-    const incrementTemp = `t${this.temporalCounter++}`
+    const incrementTemp = this.memoryMapper.getAddrFor('int', 'temporal')
+    const { addr: controlAddr } = this.getVarEntry(controlName)!
+
     const temporalIncrement: Instruction = {
       operation: '+',
-      lhs: controlName,
+      lhs: controlAddr,
       rhs: stepDir,
       result: incrementTemp,
     }
@@ -459,14 +461,14 @@ class SymbolTable {
     const incrementCommit: Instruction = {
       operation: '=',
       lhs: incrementTemp,
-      result: controlName,
+      result: controlAddr,
     }
 
     this.instructionList.push(incrementCommit)
     log('***Added instruction***', incrementCommit)
 
     const falseJump = this.safePop(this.jumpStack)
-    const destination = this.safePop(this.jumpStack).toString()
+    const destination = this.safePop(this.jumpStack)
 
     const jumpQuad: Instruction = {
       operation: 'goto',
