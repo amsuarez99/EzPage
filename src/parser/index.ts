@@ -52,8 +52,17 @@ class EzParser extends EmbeddedActionsParser {
 
         // Optional Initialization
         this.OPTION2(() => {
-          this.CONSUME(Lexer.Equals)
-          this.OR([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.constantArray) }])
+          this.ACTION(() => this.symbolTable.pushOperand(varName))
+          const operator = this.CONSUME(Lexer.Equals).image as '='
+          this.ACTION(() => this.symbolTable.pushOperator(operator))
+          this.OR([{
+            ALT: () => {
+
+              const { value, type } = this.SUBRULE(this.literal)
+              this.ACTION(() => this.symbolTable.pushLiteral(value, type))
+            }
+          }, { ALT: () => this.SUBRULE(this.constantArray) }])
+          this.ACTION(() => this.symbolTable.doAssignmentOperation())
         })
       },
       SEP: Lexer.Comma,

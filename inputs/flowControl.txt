@@ -1,6 +1,6 @@
 page MyFirstMFPage
 
-string hola = 44
+string hola = "hola"
 int abcd = 12
 int something = 1234
 

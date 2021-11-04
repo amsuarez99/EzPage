@@ -10,15 +10,54 @@ Added var __hola__ to varsTable of global
   "type": "string",
   "addr": 2000
 }
+pushed to operand stack: [hola with addr 2000 of type string]
+pushed to operator stack: =
+Added literal to stack
+{
+  "value": "\"hola\"",
+  "type": "string"
+}
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": 14000,
+  "result": 2000
+}
 Added var __abcd__ to varsTable of global
 {
   "type": "int",
   "addr": 0
 }
+pushed to operand stack: [abcd with addr 0 of type int]
+pushed to operator stack: =
+Added literal to stack
+{
+  "value": "12",
+  "type": "int"
+}
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": 12000,
+  "result": 0
+}
 Added var __something__ to varsTable of global
 {
   "type": "int",
   "addr": 1
+}
+pushed to operand stack: [something with addr 1 of type int]
+pushed to operator stack: =
+Added literal to stack
+{
+  "value": "1234",
+  "type": "int"
+}
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": 12001,
+  "result": 1
 }
 changed current func: something
 Added funcEntry: something
@@ -107,7 +146,7 @@ pushed __temporal__ to operandStack:
 {
   "operation": "<",
   "lhs": 4003,
-  "rhs": 12000,
+  "rhs": 12002,
   "result": 11000
 }
 Popped fake floor
@@ -135,7 +174,7 @@ pushed __temporal__ to operandStack:
 {
   "operation": "+",
   "lhs": 4003,
-  "rhs": 12001,
+  "rhs": 12003,
   "result": 8001
 }
 ***Added instruction***
@@ -147,7 +186,7 @@ pushed __temporal__ to operandStack:
 ***Added instruction***
 {
   "operation": "goto",
-  "result": 3
+  "result": 6
 }
 Added literal to stack
 {
@@ -157,7 +196,7 @@ Added literal to stack
 ***Added instruction***
 {
   "operation": "=",
-  "lhs": 12002,
+  "lhs": 12004,
   "result": 4003
 }
 Added literal to stack
@@ -168,7 +207,7 @@ Added literal to stack
 ***Added instruction***
 {
   "operation": "=",
-  "lhs": 12003,
+  "lhs": 12005,
   "result": 8002
 }
 ***Added instruction***
@@ -211,7 +250,7 @@ pushed __temporal__ to operandStack:
 {
   "operation": "+",
   "lhs": 4003,
-  "rhs": 12001,
+  "rhs": 12003,
   "result": 8004
 }
 ***Added instruction***
@@ -223,10 +262,25 @@ pushed __temporal__ to operandStack:
 ***Added instruction***
 {
   "operation": "goto",
-  "result": 10
+  "result": 13
 }
 Deleted varsTable for funcEntry: something
 [
+  {
+    "operation": "=",
+    "lhs": 14000,
+    "result": 2000
+  },
+  {
+    "operation": "=",
+    "lhs": 12000,
+    "result": 0
+  },
+  {
+    "operation": "=",
+    "lhs": 12001,
+    "result": 1
+  },
   {
     "operation": "+",
     "lhs": 1,
@@ -247,18 +301,18 @@ Deleted varsTable for funcEntry: something
   {
     "operation": "<",
     "lhs": 4003,
-    "rhs": 12000,
+    "rhs": 12002,
     "result": 11000
   },
   {
     "operation": "gotoF",
     "lhs": 11000,
-    "result": 8
+    "result": 11
   },
   {
     "operation": "+",
     "lhs": 4003,
-    "rhs": 12001,
+    "rhs": 12003,
     "result": 8001
   },
   {
@@ -268,16 +322,16 @@ Deleted varsTable for funcEntry: something
   },
   {
     "operation": "goto",
-    "result": 3
+    "result": 6
   },
   {
     "operation": "=",
-    "lhs": 12002,
+    "lhs": 12004,
     "result": 4003
   },
   {
     "operation": "=",
-    "lhs": 12003,
+    "lhs": 12005,
     "result": 8002
   },
   {
@@ -289,7 +343,7 @@ Deleted varsTable for funcEntry: something
   {
     "operation": "gotoF",
     "lhs": 8003,
-    "result": 17
+    "result": 20
   },
   {
     "operation": "/",
@@ -305,7 +359,7 @@ Deleted varsTable for funcEntry: something
   {
     "operation": "+",
     "lhs": 4003,
-    "rhs": 12001,
+    "rhs": 12003,
     "result": 8004
   },
   {
@@ -315,6 +369,6 @@ Deleted varsTable for funcEntry: something
   },
   {
     "operation": "goto",
-    "result": 10
+    "result": 13
   }
 ]
