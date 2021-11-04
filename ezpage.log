@@ -8,17 +8,17 @@ Var Table for global not found... creating varsTable
 Added var __hola__ to varsTable of global
 {
   "type": "string",
-  "addr": 0
+  "addr": 2000
 }
 Added var __abcd__ to varsTable of global
 {
   "type": "int",
-  "addr": 1
+  "addr": 0
 }
 Added var __something__ to varsTable of global
 {
   "type": "int",
-  "addr": 2
+  "addr": 1
 }
 changed current func: something
 Added funcEntry: something
@@ -34,64 +34,64 @@ Var Table for something not found... creating varsTable
 Added var __hola__ to varsTable of something
 {
   "type": "int",
-  "addr": 3
+  "addr": 4000
 }
 Added var __hola2__ to varsTable of something
 {
   "type": "int",
-  "addr": 4
+  "addr": 4001
 }
 Added var __mmmmm__ to varsTable of something
 {
   "type": "int",
-  "addr": 5
+  "addr": 4002
 }
-pushed to operand stack: [mmmmm, int]
+pushed to operand stack: [mmmmm with addr 4002 of type int]
 pushed to operator stack: =
-pushed to operand stack: [abcd, int]
+pushed to operand stack: [abcd with addr 0 of type int]
 pushed to operator stack: /
 pushed fake floor
-pushed to operand stack: [something, int]
+pushed to operand stack: [something with addr 1 of type int]
 pushed to operator stack: +
-pushed to operand stack: [hola, int]
+pushed to operand stack: [hola with addr 4000 of type int]
 pushed __temporal__ to operandStack:
 [
-  "t999",
+  8000,
   "int"
 ]
 ***Added instruction***
 {
   "operation": "+",
-  "lhs": "something",
-  "rhs": "hola",
-  "result": "t999"
+  "lhs": 1,
+  "rhs": 4000,
+  "result": 8000
 }
 Popped fake floor
 pushed __temporal__ to operandStack:
 [
-  "t1000",
+  9000,
   "float"
 ]
 ***Added instruction***
 {
   "operation": "/",
-  "lhs": "abcd",
-  "rhs": "t999",
-  "result": "t1000"
+  "lhs": 0,
+  "rhs": 8000,
+  "result": 9000
 }
 ***Added instruction***
 {
   "operation": "=",
-  "lhs": "t1000",
-  "result": "mmmmm"
+  "lhs": 9000,
+  "result": 4002
 }
 Added var __myVar__ to varsTable of something
 {
   "type": "int",
-  "addr": 6
+  "addr": 4003
 }
 pushed fake floor
-pushed to operand stack: [myVar, int]
+pushed to operand stack: [myVar with addr 4003 of type int]
 pushed to operator stack: <
 Added literal to stack
 {
@@ -100,26 +100,26 @@ Added literal to stack
 }
 pushed __temporal__ to operandStack:
 [
-  "t1001",
+  11000,
   "bool"
 ]
 ***Added instruction***
 {
   "operation": "<",
-  "lhs": "myVar",
-  "rhs": "4000",
-  "result": "t1001"
+  "lhs": 4003,
+  "rhs": 12000,
+  "result": 11000
 }
 Popped fake floor
 ***Added instruction***
 {
   "operation": "gotoF",
-  "lhs": "t1001",
-  "result": "pending_jump"
+  "lhs": 11000,
+  "result": -1
 }
-pushed to operand stack: [myVar, int]
+pushed to operand stack: [myVar with addr 4003 of type int]
 pushed to operator stack: =
-pushed to operand stack: [myVar, int]
+pushed to operand stack: [myVar with addr 4003 of type int]
 pushed to operator stack: +
 Added literal to stack
 {
@@ -128,26 +128,26 @@ Added literal to stack
 }
 pushed __temporal__ to operandStack:
 [
-  "t1002",
+  8001,
   "int"
 ]
 ***Added instruction***
 {
   "operation": "+",
-  "lhs": "myVar",
-  "rhs": "4001",
-  "result": "t1002"
+  "lhs": 4003,
+  "rhs": 12001,
+  "result": 8001
 }
 ***Added instruction***
 {
   "operation": "=",
-  "lhs": "t1002",
-  "result": "myVar"
+  "lhs": 8001,
+  "result": 4003
 }
 ***Added instruction***
 {
   "operation": "goto",
-  "result": "3"
+  "result": 3
 }
 Added literal to stack
 {
@@ -157,8 +157,8 @@ Added literal to stack
 ***Added instruction***
 {
   "operation": "=",
-  "lhs": "4002",
-  "result": "myVar"
+  "lhs": 12002,
+  "result": 4003
 }
 Added literal to stack
 {
@@ -168,153 +168,153 @@ Added literal to stack
 ***Added instruction***
 {
   "operation": "=",
-  "lhs": "4003",
-  "result": "t1003"
+  "lhs": 12003,
+  "result": 8002
 }
 ***Added instruction***
 {
   "operation": "<",
-  "lhs": "myVar",
-  "rhs": "t1003",
-  "result": "t1004"
+  "lhs": 4003,
+  "rhs": 8002,
+  "result": 8003
 }
 ***Added instruction***
 {
   "operation": "gotoF",
-  "lhs": "t1004",
-  "result": "pending_jump"
+  "lhs": 8003,
+  "result": -1
 }
-pushed to operand stack: [something, int]
+pushed to operand stack: [something with addr 1 of type int]
 pushed to operator stack: =
-pushed to operand stack: [something, int]
+pushed to operand stack: [something with addr 1 of type int]
 pushed to operator stack: /
-pushed to operand stack: [something, int]
+pushed to operand stack: [something with addr 1 of type int]
 pushed __temporal__ to operandStack:
 [
-  "t1005",
+  9001,
   "float"
 ]
 ***Added instruction***
 {
   "operation": "/",
-  "lhs": "something",
-  "rhs": "something",
-  "result": "t1005"
+  "lhs": 1,
+  "rhs": 1,
+  "result": 9001
 }
 ***Added instruction***
 {
   "operation": "=",
-  "lhs": "t1005",
-  "result": "something"
+  "lhs": 9001,
+  "result": 1
 }
 ***Added instruction***
 {
   "operation": "+",
-  "lhs": "myVar",
-  "rhs": "4001",
-  "result": "t1006"
+  "lhs": 4003,
+  "rhs": 12001,
+  "result": 8004
 }
 ***Added instruction***
 {
   "operation": "=",
-  "lhs": "t1006",
-  "result": "myVar"
+  "lhs": 8004,
+  "result": 4003
 }
 ***Added instruction***
 {
   "operation": "goto",
-  "result": "10"
+  "result": 10
 }
 Deleted varsTable for funcEntry: something
 [
   {
     "operation": "+",
-    "lhs": "something",
-    "rhs": "hola",
-    "result": "t999"
+    "lhs": 1,
+    "rhs": 4000,
+    "result": 8000
   },
   {
     "operation": "/",
-    "lhs": "abcd",
-    "rhs": "t999",
-    "result": "t1000"
+    "lhs": 0,
+    "rhs": 8000,
+    "result": 9000
   },
   {
     "operation": "=",
-    "lhs": "t1000",
-    "result": "mmmmm"
+    "lhs": 9000,
+    "result": 4002
   },
   {
     "operation": "<",
-    "lhs": "myVar",
-    "rhs": "4000",
-    "result": "t1001"
+    "lhs": 4003,
+    "rhs": 12000,
+    "result": 11000
   },
   {
     "operation": "gotoF",
-    "lhs": "t1001",
-    "result": "8"
+    "lhs": 11000,
+    "result": 8
   },
   {
     "operation": "+",
-    "lhs": "myVar",
-    "rhs": "4001",
-    "result": "t1002"
+    "lhs": 4003,
+    "rhs": 12001,
+    "result": 8001
   },
   {
     "operation": "=",
-    "lhs": "t1002",
-    "result": "myVar"
+    "lhs": 8001,
+    "result": 4003
   },
   {
     "operation": "goto",
-    "result": "3"
+    "result": 3
   },
   {
     "operation": "=",
-    "lhs": "4002",
-    "result": "myVar"
+    "lhs": 12002,
+    "result": 4003
   },
   {
     "operation": "=",
-    "lhs": "4003",
-    "result": "t1003"
+    "lhs": 12003,
+    "result": 8002
   },
   {
     "operation": "<",
-    "lhs": "myVar",
-    "rhs": "t1003",
-    "result": "t1004"
+    "lhs": 4003,
+    "rhs": 8002,
+    "result": 8003
   },
   {
     "operation": "gotoF",
-    "lhs": "t1004",
-    "result": "17"
+    "lhs": 8003,
+    "result": 17
   },
   {
     "operation": "/",
-    "lhs": "something",
-    "rhs": "something",
-    "result": "t1005"
+    "lhs": 1,
+    "rhs": 1,
+    "result": 9001
   },
   {
     "operation": "=",
-    "lhs": "t1005",
-    "result": "something"
+    "lhs": 9001,
+    "result": 1
   },
   {
     "operation": "+",
-    "lhs": "myVar",
-    "rhs": "4001",
-    "result": "t1006"
+    "lhs": 4003,
+    "rhs": 12001,
+    "result": 8004
   },
   {
     "operation": "=",
-    "lhs": "t1006",
-    "result": "myVar"
+    "lhs": 8004,
+    "result": 4003
   },
   {
     "operation": "goto",
-    "result": "10"
+    "result": 10
   }
 ]

@@ -32,3 +32,11 @@ For this third checkpoint:
 
 - We added embedded semantic actions on our parser that allow us to extract and manipulate context such as variables and functions.
 - We defined our virtual memory scheme and structure for the stacks needed for expressions.
+
+## Checkpoint 4
+
+For this fourth checkpoint:
+
+- Expressions and assignments are working correctly.
+- Conditionals and loops generate correctly quadruples and writes to the virtual memory.
+

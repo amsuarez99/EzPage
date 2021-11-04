@@ -42,14 +42,16 @@ export type OperatorRecord = Record<NonVoidType, Record<NonVoidType, NonVoidType
 export type SemanticCube = Record<Operator, OperatorRecord>
 
 // Stores a tuple of (address, type)
-export type OperandStackItem = [string, NonVoidType]
+export type OperandStackItem = [number, NonVoidType]
 export type GotoOperation = 'goto' | 'gotoF' | 'gotoT'
 export type Operation = Operator | GotoOperation | 'print'
 export interface Instruction {
   operation: Operation
-  lhs?: string
-  rhs?: string
-  result: string
+  lhs?: number
+  rhs?: number
+  result: number
 }
+
+export type Scope = 'global' | 'local' | 'temporal' | 'constant'
 
 export type LiteralTable = Record<string, number>
