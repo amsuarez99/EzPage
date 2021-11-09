@@ -137,6 +137,24 @@ class SymbolTable {
     return this.getCurrentFunc().varsTable?.[name] || this.getGlobalFunc().varsTable?.[name]
   }
 
+  handleProgramStart() {
+    const quad: Instruction = {
+      operation: 'goto',
+      lhs: -1,
+      rhs: -1,
+      result: -1,
+    }
+    this.instructionList.push(quad)
+    log('***Added instruction***', quad)
+    this.jumpStack.push(this.instructionList.length - 1)
+  }
+
+  handleRenderRegistry() {
+    this.handleFuncRegistry('render', 'void')
+    const destination = this.safePop(this.jumpStack)
+    this.fillPendingJump(destination)
+  }
+
   /**
    * Adds a function to the FuncTable
    * @param {string} name the name of the function
@@ -283,13 +301,14 @@ class SymbolTable {
   safePop<T>(stack: Stack<T>, expectedItem?: T): T {
     if (expectedItem && stack.peek() !== expectedItem)
       throw new Error(`Error in operator stack: Expected ${expectedItem}, but found ${stack.peek()}`)
-    if (!stack.peek()) throw new Error('Tried to pop an item in a stack, but found no items')
+    if (stack.peek() === undefined) throw new Error('Tried to pop an item in a stack, but found no items')
     const stackItem = stack.pop() as T
     return stackItem
   }
 
   getLiteralAddr(literal: string, type: NonVoidType): number {
-    if (!this.literalTable[literal]) this.literalTable[literal] = this.memoryMapper.getAddrFor(type, 'constant')
+    if (this.literalTable[literal] === undefined)
+      this.literalTable[literal] = this.memoryMapper.getAddrFor(type, 'constant')
     return this.literalTable[literal]
   }
 

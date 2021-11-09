@@ -18,6 +18,7 @@ class EzParser extends EmbeddedActionsParser {
     // get the name of the page and initialize
     const pageName = this.CONSUME(Lexer.Id).image
     this.ACTION(() => (this.pageName = pageName))
+    this.ACTION(() => this.symbolTable.handleProgramStart())
 
     this.MANY({
       // Look ahead one token to see if render (our main method) is ahead
@@ -415,6 +416,7 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.Render)
     this.CONSUME(Lexer.OParentheses)
     this.CONSUME(Lexer.CParentheses)
+    this.ACTION(() => this.symbolTable.handleRenderRegistry())
     this.SUBRULE(this.renderBlock)
   })
 
