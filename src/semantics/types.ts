@@ -16,6 +16,7 @@ export interface FuncTableEntry {
   type?: Type
   args?: NonVoidType[]
   varsTable?: VarTable
+  funcStart?: number
 }
 export type FuncTable = Record<string, FuncTableEntry>
 

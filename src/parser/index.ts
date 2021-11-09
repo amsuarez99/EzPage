@@ -103,11 +103,10 @@ class EzParser extends EmbeddedActionsParser {
       { ALT: () => this.CONSUME(Lexer.Void).image as Type },
     ])
     const funcName = this.CONSUME(Lexer.Id).image
-    // there can't be two functions that are the same
-    this.ACTION(() => this.symbolTable.addFunc(funcName, returnType))
+    // registers the function
+    this.ACTION(() => this.symbolTable.handleFuncRegistry(funcName, returnType))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.params))
-
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.block)
     this.ACTION(() => this.symbolTable.handleFuncEnd())

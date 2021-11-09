@@ -32,7 +32,7 @@ class SymbolTable {
   constructor() {
     this.funcTable = {}
     this.currentFunc = 'global'
-    this.addFunc('global', 'void')
+    this.handleFuncRegistry('global', 'void')
     this.operatorStack = new Stack()
     this.operandStack = new Stack()
     this.jumpStack = new Stack()
@@ -142,11 +142,13 @@ class SymbolTable {
    * @param {string} name the name of the function
    * @param {string} returnType the returnType of the function
    */
-  addFunc(name: string, returnType: Type): void {
+  handleFuncRegistry(name: string, returnType: Type): void {
     if (this.getFuncEntry(name)) throw new Error('Duplicate Function Entry')
+    const funcStart = name === 'global' ? -1 : this.instructionList.length
     this.setCurrentFunc(name)
     this.funcTable[name] = {
       type: returnType,
+      funcStart,
     }
     log(`Added funcEntry: ${name}`, this.getCurrentFunc())
   }
@@ -486,6 +488,15 @@ class SymbolTable {
     this.deleteVarsTable()
     this.memoryMapper.resetAddrFor('local')
     this.memoryMapper.resetAddrFor('temporal')
+
+    // OPTIONAL handle quadList as a class, to remove complexity from the symbolTable
+    // this.quadrupleHandler.addFuncEnd()
+    this.instructionList.push({
+      operation: 'endfunc',
+      lhs: -1,
+      rhs: -1,
+      result: -1,
+    })
   }
 }
 
