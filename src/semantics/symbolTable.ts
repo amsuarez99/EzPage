@@ -244,6 +244,7 @@ class SymbolTable {
     const quadruple: Instruction = {
       operation: operator,
       lhs: rightOperandAddr,
+      rhs: -1,
       result: leftOperandAddr,
     }
 
@@ -300,6 +301,7 @@ class SymbolTable {
     const quad: Instruction = {
       operation: 'gotoF',
       lhs: conditionName,
+      rhs: -1,
       result: -1,
     }
 
@@ -312,6 +314,8 @@ class SymbolTable {
     const falseCondition = this.safePop(this.jumpStack)
     const quad: Instruction = {
       operation: 'goto',
+      lhs: -1,
+      rhs: -1,
       result: -1,
     }
     this.instructionList.push(quad)
@@ -342,6 +346,8 @@ class SymbolTable {
     const conditionBegin = this.safePop(this.jumpStack)
     const quad: Instruction = {
       operation: 'goto',
+      lhs: -1,
+      rhs: -1,
       result: conditionBegin,
     }
     this.instructionList.push(quad)
@@ -371,7 +377,8 @@ class SymbolTable {
 
     const quad: Instruction = {
       operation: '=',
-      lhs: exprName,
+      lhs: -1,
+      rhs: -1,
       result: controlAddr,
     }
 
@@ -391,6 +398,7 @@ class SymbolTable {
     const quadruple: Instruction = {
       operation: '=',
       lhs: exprAddr,
+      rhs: -1,
       result: upperLim,
     }
 
@@ -415,6 +423,7 @@ class SymbolTable {
     const falseJump: Instruction = {
       operation: 'gotoF',
       lhs: temp,
+      rhs: -1,
       result: -1,
     }
 
@@ -435,6 +444,7 @@ class SymbolTable {
     const quad: Instruction = {
       operation: '=',
       lhs: exprAddr,
+      rhs: -1,
       result: temp,
     }
 
@@ -462,6 +472,7 @@ class SymbolTable {
     const incrementCommit: Instruction = {
       operation: '=',
       lhs: incrementTemp,
+      rhs: -1,
       result: controlAddr,
     }
 
@@ -473,6 +484,8 @@ class SymbolTable {
 
     const jumpQuad: Instruction = {
       operation: 'goto',
+      lhs: -1,
+      rhs: -1,
       result: destination,
     }
 

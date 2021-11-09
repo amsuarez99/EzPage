@@ -44,12 +44,14 @@ export type SemanticCube = Record<Operator, OperatorRecord>
 
 // Stores a tuple of (address, type)
 export type OperandStackItem = [number, NonVoidType]
+export type FuncOperation = 'gosub' | 'endfunc' | 'param' | 'era'
 export type GotoOperation = 'goto' | 'gotoF' | 'gotoT'
-export type Operation = Operator | GotoOperation | 'print'
+export type ExtraOperation = 'print'
+export type Operation = Operator | GotoOperation | FuncOperation | ExtraOperation
 export interface Instruction {
   operation: Operation
-  lhs?: number
-  rhs?: number
+  lhs: number
+  rhs: number
   result: number
 }
 
