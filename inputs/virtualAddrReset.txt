@@ -1,0 +1,18 @@
+page AddrReset
+
+string something(int hola, int hola2) {
+  hola2 = 2
+  return
+}
+
+string something2(int hola, int hola2) {
+  hola = 2
+  return
+}
+
+void render() {
+  container() {
+    heading(size: 'h1', text: "hello 1")
+    heading(size: 'h2', text: "hello 2")
+  }
+}

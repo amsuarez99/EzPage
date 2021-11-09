@@ -351,8 +351,7 @@ class SymbolTable {
     const varEntry = this.getVarEntry(identifier)
     if (!varEntry) throw new Error('Unexisting identifier in for loop')
     const { type, addr } = varEntry
-    if (!isNumerical(type))
-      throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${type}`)
+    if (!isNumerical(type)) throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${type}`)
     this.operandStack.push([addr, type])
   }
 
@@ -479,6 +478,14 @@ class SymbolTable {
     log('***Added instruction***', jumpQuad)
 
     this.fillPendingJump(falseJump)
+  }
+
+  handleFuncEnd() {
+    // OPTIONAL handle funcTable as a class, to remove complexity from the symbolTable class
+    // this.funcTable.deleteVarsTable()
+    this.deleteVarsTable()
+    this.memoryMapper.resetAddrFor('local')
+    this.memoryMapper.resetAddrFor('temporal')
   }
 }
 

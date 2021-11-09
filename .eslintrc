@@ -1,10 +1,14 @@
 {
   "root": true,
-  "parser": "@typescript-eslint/parser",
+  "Parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module",
     "project": "./tsconfig.json"
+  },
+  "rules": {
+    // disable the rule for all files
+    "@typescript-eslint/explicit-module-boundary-types": "off"
   },
   "plugins": ["@typescript-eslint"],
   "extends": [

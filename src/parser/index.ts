@@ -55,13 +55,15 @@ class EzParser extends EmbeddedActionsParser {
           this.ACTION(() => this.symbolTable.pushOperand(varName))
           const operator = this.CONSUME(Lexer.Equals).image as '='
           this.ACTION(() => this.symbolTable.pushOperator(operator))
-          this.OR([{
-            ALT: () => {
-
-              const { value, type } = this.SUBRULE(this.literal)
-              this.ACTION(() => this.symbolTable.pushLiteral(value, type))
-            }
-          }, { ALT: () => this.SUBRULE(this.constantArray) }])
+          this.OR([
+            {
+              ALT: () => {
+                const { value, type } = this.SUBRULE(this.literal)
+                this.ACTION(() => this.symbolTable.pushLiteral(value, type))
+              },
+            },
+            { ALT: () => this.SUBRULE(this.constantArray) },
+          ])
           this.ACTION(() => this.symbolTable.doAssignmentOperation())
         })
       },
@@ -108,7 +110,7 @@ class EzParser extends EmbeddedActionsParser {
 
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.block)
-    this.ACTION(() => this.symbolTable.deleteVarsTable())
+    this.ACTION(() => this.symbolTable.handleFuncEnd())
   })
 
   public block = this.RULE('block', (funcName: string) => {
