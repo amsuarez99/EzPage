@@ -186,8 +186,8 @@ export default class MemoryMapper {
   }
 }
 
-// Memory Map
 /*
+Memory Map
 ------------------------------------
 |        Global Variables          |
 |----------------------------------|

@@ -28,8 +28,9 @@ class EzParser extends EmbeddedActionsParser {
       },
     })
     this.SUBRULE(this.render)
-    log(this.symbolTable.instructionList)
+    this.symbolTable.instructionList.forEach((instruction, idx) => log(idx, instruction))
     log(this.symbolTable.funcTable)
+    log(this.symbolTable.literalTable)
   })
 
   // global variables should be different because they have to be declared constantly
@@ -111,6 +112,7 @@ class EzParser extends EmbeddedActionsParser {
     this.OPTION(() => this.SUBRULE(this.params))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.block)
+    this.ACTION(() => this.symbolTable.handleReturn())
     this.ACTION(() => this.symbolTable.handleFuncEnd())
   })
 
@@ -334,7 +336,12 @@ class EzParser extends EmbeddedActionsParser {
           this.ACTION(() => this.symbolTable.pushLiteral(value, type))
         },
       },
-      { ALT: () => this.SUBRULE(this.funcCall) },
+      {
+        ALT: () => {
+          const id = this.SUBRULE(this.funcCall)
+          this.ACTION(() => this.symbolTable.pushOperand(id))
+        },
+      },
       {
         ALT: () => {
           const id = this.SUBRULE(this.variable)
@@ -347,17 +354,21 @@ class EzParser extends EmbeddedActionsParser {
   public funcCall = this.RULE('funcCall', () => {
     const funcName = this.CONSUME(Lexer.Id).image
     this.ACTION(() => this.symbolTable.verifyFuncExistance(funcName))
-    // this.ACTION(() => this.symbolTable.prepareParam())
+    this.ACTION(() => this.symbolTable.handleEra(funcName))
+    let k = 0
     this.CONSUME(Lexer.OParentheses)
     this.MANY_SEP({
       SEP: Lexer.Comma,
       DEF: () => {
         this.SUBRULE(this.expression)
-        // this.ACTION(() => this.symbolTable.verifyParam())
+        this.ACTION(() => this.symbolTable.processParam(funcName, k))
+        this.ACTION(() => k++)
       },
     })
-    // this.ACTION(() => this.symbolTable.areParamsFilled())
     this.CONSUME(Lexer.CParentheses)
+    this.ACTION(() => this.symbolTable.verifySignatureCompletion(funcName, k))
+    this.ACTION(() => this.symbolTable.genGosub(funcName))
+    return funcName
   })
 
   public ifStatement = this.RULE('ifStatement', () => {
@@ -414,7 +425,10 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.OParentheses)
     this.MANY_SEP({
       SEP: Lexer.Comma,
-      DEF: () => this.SUBRULE(this.expression),
+      DEF: () => {
+        this.SUBRULE(this.expression)
+        this.ACTION(() => this.symbolTable.handlePrint())
+      },
     })
     this.CONSUME(Lexer.CParentheses)
   })

@@ -12,6 +12,12 @@ string something(int hola, int hola2) {
   return "hola mundo 2"
 }
 
+int secondFunction(int someVar) {
+  string something = something(someVar, 23)
+  int myInt = 23
+  return myInt
+}
+
 void render() {
   int hola = 44
   container() {

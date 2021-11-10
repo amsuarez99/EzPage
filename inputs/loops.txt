@@ -16,6 +16,10 @@ string something(int hola, int hola2) {
   return
 }
 
+int secondFunction(int someVar) {
+  return something(someVar, 23)
+}
+
 void render() {
   container() {
     heading(size: 'h1', text: "hello 1")

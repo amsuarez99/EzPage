@@ -576,6 +576,66 @@ class SymbolTable {
       result: -1,
     })
   }
+
+  handleEra(funcName: string) {
+    const mappedFuncName = this.getLiteralAddr(funcName, 'string')
+    const quad: Instruction = {
+      operation: 'era',
+      lhs: mappedFuncName,
+      rhs: -1,
+      result: -1,
+    }
+    this.instructionList.push(quad)
+  }
+
+  processParam(funcName: string, argIdx: number) {
+    // already checked if func exists in verifyFuncExistance
+    const funcArgs = this.getFuncEntry(funcName)!.args
+    if (!funcArgs) throw new Error('Func signature mismatch: No args were defined in the func signature')
+    if (argIdx >= funcArgs.length) throw new Error('Func signature mismatch: Too many arguments')
+    const [paramAddr, paramType] = this.safePop(this.operandStack)
+    if (paramType !== funcArgs[argIdx]) throw new Error(`Func signature mismatch: Type mismatch for paramNo: ${argIdx}`)
+
+    const quad: Instruction = {
+      operation: 'param',
+      lhs: paramAddr,
+      rhs: -1,
+      result: this.getLiteralAddr(`param${argIdx}`, 'string'),
+    }
+
+    this.instructionList.push(quad)
+  }
+
+  verifySignatureCompletion(funcName: string, argIdx: number) {
+    // already checked if func exists in verifyFuncExistance
+    const funcArgs = this.getFuncEntry(funcName)!.args
+    if (argIdx !== funcArgs?.length) throw new Error('Func signature mismatch: missing params in funcCall')
+  }
+
+  genGosub(funcName: string) {
+    const funcEntry = this.getFuncEntry(funcName)!
+    const mappedFuncName = this.getLiteralAddr(funcName, 'string')
+    if (!funcEntry.funcStart) throw new Error('Weird error: the function start was still not defined')
+
+    const initAddr = funcEntry.funcStart
+    const quad: Instruction = {
+      operation: 'gosub',
+      lhs: mappedFuncName,
+      rhs: -1,
+      result: initAddr,
+    }
+    this.instructionList.push(quad)
+  }
+
+  handlePrint() {
+    const [operatorAddr, _] = this.safePop(this.operandStack)
+    this.instructionList.push({
+      operation: 'print',
+      lhs: operatorAddr,
+      rhs: -1,
+      result: -1,
+    })
+  }
 }
 
 export { SymbolTable }

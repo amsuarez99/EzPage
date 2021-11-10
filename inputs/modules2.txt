@@ -1,0 +1,27 @@
+page patito 
+ int a, b 
+ float f 
+void uno(int a) 
+{ 
+ a= a+b*a 
+ print(a, b, a+b) 
+} 
+void dos(int a, int b, float g) 
+{  int i 
+ i=b 
+ while (i>0) 
+ {   a=a+b*i+b 
+   uno(i*2) 
+   print(a) 
+   i=i-1 
+ } 
+} 
+void render() 
+{ 
+  a=3
+ b=a+1 
+ print(a, b) 
+ f=3.14 
+ dos ( a+b*2, b, f*3) 
+ print(a,b,f*2+1) 
+} 
