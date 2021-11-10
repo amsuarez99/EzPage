@@ -1,3 +1,4 @@
+import { ScopeSizeEntry } from 'semantics'
 import { NonVoidType, Scope } from './types'
 
 export default class MemoryMapper {
@@ -102,6 +103,19 @@ export default class MemoryMapper {
     return this.memoryRanges[scope][type].curr++
   }
 
+  getMemorySizeFor(scope: Scope) {
+    // default behaviour, every type of the received scope is reset
+    const AddrTypes = Object.entries(this.memoryRanges[scope]) as [
+      NonVoidType,
+      Record<'min' | 'max' | 'curr', number>,
+    ][]
+    const memorySizes = AddrTypes.reduce((memorySizes, [type, addressMap]) => {
+      memorySizes[type] = addressMap.curr - addressMap.min
+      return memorySizes
+    }, {} as ScopeSizeEntry)
+    return memorySizes
+  }
+
   resetAddrFor(scope: Scope, type?: NonVoidType) {
     if (type) {
       this.memoryRanges[scope][type].curr = this.memoryRanges[scope][type].curr
@@ -136,7 +150,7 @@ export default class MemoryMapper {
     } else if (address >= 8000 && address <= 11999) {
       //temporal
       if (address >= 8000 && address <= 8999) {
-        return 'temporal int'
+        // return 'temporal int'
         return { type: 'int', scope: 'temporal' }
       } else if (address >= 9000 && address <= 9999) {
         return { type: 'float', scope: 'temporal' }

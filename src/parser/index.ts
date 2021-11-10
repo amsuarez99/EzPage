@@ -29,6 +29,7 @@ class EzParser extends EmbeddedActionsParser {
     })
     this.SUBRULE(this.render)
     log(this.symbolTable.instructionList)
+    log(this.symbolTable.funcTable)
   })
 
   // global variables should be different because they have to be declared constantly
@@ -418,6 +419,7 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.CParentheses)
     this.ACTION(() => this.symbolTable.handleRenderRegistry())
     this.SUBRULE(this.renderBlock)
+    this.ACTION(() => this.symbolTable.handleFuncEnd())
   })
 
   public renderBlock = this.RULE('renderBlock', () => {

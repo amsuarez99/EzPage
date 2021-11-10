@@ -1,8 +1,11 @@
+import internal from 'stream'
+
 // General Types
 export type NonVoidType = 'string' | 'float' | 'int' | 'bool'
 export type Type = 'void' | NonVoidType
 export type TypeError = 'Type Error'
 export type Kind = 'array' | 'matrix'
+export type ScopeSizeEntry = Record<NonVoidType, number>
 
 // ! Variable Directory Types
 // * This is an object so we can index by identifier name
@@ -17,6 +20,7 @@ export interface FuncTableEntry {
   args?: NonVoidType[]
   varsTable?: VarTable
   funcStart?: number
+  size?: Record<'local' | 'temporal', ScopeSizeEntry>
 }
 export type FuncTable = Record<string, FuncTableEntry>
 

@@ -518,8 +518,17 @@ class SymbolTable {
     // OPTIONAL handle funcTable as a class, to remove complexity from the symbolTable class
     // this.funcTable.deleteVarsTable()
     this.deleteVarsTable()
+    // this.funcTable.calcMemorySize()
+    const localMem = this.memoryMapper.getMemorySizeFor('local')
+    const temporalMem = this.memoryMapper.getMemorySizeFor('temporal')
+
     this.memoryMapper.resetAddrFor('local')
     this.memoryMapper.resetAddrFor('temporal')
+
+    this.getCurrentFunc().size = {
+      local: localMem,
+      temporal: temporalMem,
+    }
 
     // OPTIONAL handle quadList as a class, to remove complexity from the symbolTable
     // this.quadrupleHandler.addFuncEnd()
