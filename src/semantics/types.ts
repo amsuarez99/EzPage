@@ -1,8 +1,11 @@
+import internal from 'stream'
+
 // General Types
 export type NonVoidType = 'string' | 'float' | 'int' | 'bool'
 export type Type = 'void' | NonVoidType
 export type TypeError = 'Type Error'
-export type Kind = 'array' | 'matrix'
+export type Kind = 'array' | 'matrix' | 'funcReturn'
+export type ScopeSizeEntry = Record<NonVoidType, number>
 
 // ! Variable Directory Types
 // * This is an object so we can index by identifier name
@@ -16,6 +19,8 @@ export interface FuncTableEntry {
   type?: Type
   args?: NonVoidType[]
   varsTable?: VarTable
+  funcStart?: number
+  size?: Record<'local' | 'temporal', ScopeSizeEntry>
 }
 export type FuncTable = Record<string, FuncTableEntry>
 
@@ -43,12 +48,14 @@ export type SemanticCube = Record<Operator, OperatorRecord>
 
 // Stores a tuple of (address, type)
 export type OperandStackItem = [number, NonVoidType]
+export type FuncOperation = 'gosub' | 'endfunc' | 'param' | 'era'
 export type GotoOperation = 'goto' | 'gotoF' | 'gotoT'
-export type Operation = Operator | GotoOperation | 'print'
+export type ExtraOperation = 'print'
+export type Operation = Operator | GotoOperation | FuncOperation | ExtraOperation
 export interface Instruction {
   operation: Operation
-  lhs?: number
-  rhs?: number
+  lhs: number
+  rhs: number
   result: number
 }
 

@@ -1,0 +1,27 @@
+page Modules
+
+string something(int hola, int hola2) {
+  bool myBoolean = true
+  if(myBoolean == false) {
+    return "hola mundo"
+  }
+  string myString = "hello world"
+  int myInt = 61
+  float myFloat = 56.55
+  hola = 2
+  return "hola mundo 2"
+}
+
+int secondFunction(int someVar) {
+  string something = something(someVar, 23)
+  int myInt = 23
+  return myInt
+}
+
+void render() {
+  int hola = 44
+  container() {
+    heading(size: 'h1', text: "hello 1")
+    heading(size: 'h2', text: "hello 2")
+  }
+}

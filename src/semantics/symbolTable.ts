@@ -32,7 +32,7 @@ class SymbolTable {
   constructor() {
     this.funcTable = {}
     this.currentFunc = 'global'
-    this.addFunc('global', 'void')
+    this.handleFuncRegistry('global', 'void')
     this.operatorStack = new Stack()
     this.operandStack = new Stack()
     this.jumpStack = new Stack()
@@ -41,16 +41,16 @@ class SymbolTable {
     this.memoryMapper = new MemoryMapper()
   }
 
-  getCurrentState(): {
-    funcTable: FuncTable
-    operatorStack: Stack<Operator | '('>
-    operandStack: Stack<OperandStackItem>
-  } {
+  getCurrentState() {
     return {
       funcTable: this.funcTable,
       operatorStack: this.operatorStack,
       operandStack: this.operandStack,
     }
+  }
+
+  verifyFuncExistance(name: string) {
+    if (!this.getFuncEntry(name)) throw new Error("Can't find the function you are trying to call")
   }
 
   /**
@@ -134,7 +134,25 @@ class SymbolTable {
    */
   getVarEntry(name: string, globalSearch = true): VarTableEntry | undefined {
     if (!globalSearch) return this.getCurrentFunc().varsTable?.[name]
-    return this.getCurrentFunc().varsTable?.[name] || this.getGlobalFunc().varsTable?.[name]
+    return this.getCurrentFunc()?.varsTable?.[name] || this.getGlobalFunc()?.varsTable?.[name]
+  }
+
+  handleProgramStart() {
+    const quad: Instruction = {
+      operation: 'goto',
+      lhs: -1,
+      rhs: -1,
+      result: -1,
+    }
+    this.instructionList.push(quad)
+    log('***Added instruction***', quad)
+    this.jumpStack.push(this.instructionList.length - 1)
+  }
+
+  handleRenderRegistry() {
+    this.handleFuncRegistry('render', 'void')
+    const destination = this.safePop(this.jumpStack)
+    this.fillPendingJump(destination)
   }
 
   /**
@@ -142,11 +160,14 @@ class SymbolTable {
    * @param {string} name the name of the function
    * @param {string} returnType the returnType of the function
    */
-  addFunc(name: string, returnType: Type): void {
+  handleFuncRegistry(name: string, returnType: Type): void {
     if (this.getFuncEntry(name)) throw new Error('Duplicate Function Entry')
+    if (this.getVarEntry(name)) throw new Error("Duplicate identifier: can't name function as global variables")
+    const funcStart = name === 'global' ? -1 : this.instructionList.length
     this.setCurrentFunc(name)
     this.funcTable[name] = {
       type: returnType,
+      funcStart,
     }
     log(`Added funcEntry: ${name}`, this.getCurrentFunc())
   }
@@ -242,6 +263,7 @@ class SymbolTable {
     const quadruple: Instruction = {
       operation: operator,
       lhs: rightOperandAddr,
+      rhs: -1,
       result: leftOperandAddr,
     }
 
@@ -280,24 +302,26 @@ class SymbolTable {
   safePop<T>(stack: Stack<T>, expectedItem?: T): T {
     if (expectedItem && stack.peek() !== expectedItem)
       throw new Error(`Error in operator stack: Expected ${expectedItem}, but found ${stack.peek()}`)
-    if (!stack.peek()) throw new Error('Tried to pop an item in a stack, but found no items')
+    if (stack.peek() === undefined) throw new Error('Tried to pop an item in a stack, but found no items')
     const stackItem = stack.pop() as T
     return stackItem
   }
 
   getLiteralAddr(literal: string, type: NonVoidType): number {
-    if (!this.literalTable[literal]) this.literalTable[literal] = this.memoryMapper.getAddrFor(type, 'constant')
+    if (this.literalTable[literal] === undefined)
+      this.literalTable[literal] = this.memoryMapper.getAddrFor(type, 'constant')
     return this.literalTable[literal]
   }
 
   // Flow Control
   handleCondition(): void {
-    const [conditionName, conditionType] = this.safePop(this.operandStack)
+    const [conditionAddress, conditionType] = this.safePop(this.operandStack)
     if (conditionType !== 'bool') throw new Error(`Expecting condition type to be boolean, found: ${conditionType}`)
 
     const quad: Instruction = {
       operation: 'gotoF',
-      lhs: conditionName,
+      lhs: conditionAddress,
+      rhs: -1,
       result: -1,
     }
 
@@ -310,6 +334,8 @@ class SymbolTable {
     const falseCondition = this.safePop(this.jumpStack)
     const quad: Instruction = {
       operation: 'goto',
+      lhs: -1,
+      rhs: -1,
       result: -1,
     }
     this.instructionList.push(quad)
@@ -340,6 +366,8 @@ class SymbolTable {
     const conditionBegin = this.safePop(this.jumpStack)
     const quad: Instruction = {
       operation: 'goto',
+      lhs: -1,
+      rhs: -1,
       result: conditionBegin,
     }
     this.instructionList.push(quad)
@@ -351,8 +379,7 @@ class SymbolTable {
     const varEntry = this.getVarEntry(identifier)
     if (!varEntry) throw new Error('Unexisting identifier in for loop')
     const { type, addr } = varEntry
-    if (!isNumerical(type))
-      throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${type}`)
+    if (!isNumerical(type)) throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${type}`)
     this.operandStack.push([addr, type])
   }
 
@@ -370,7 +397,8 @@ class SymbolTable {
 
     const quad: Instruction = {
       operation: '=',
-      lhs: exprName,
+      lhs: -1,
+      rhs: -1,
       result: controlAddr,
     }
 
@@ -390,6 +418,7 @@ class SymbolTable {
     const quadruple: Instruction = {
       operation: '=',
       lhs: exprAddr,
+      rhs: -1,
       result: upperLim,
     }
 
@@ -414,6 +443,7 @@ class SymbolTable {
     const falseJump: Instruction = {
       operation: 'gotoF',
       lhs: temp,
+      rhs: -1,
       result: -1,
     }
 
@@ -434,6 +464,7 @@ class SymbolTable {
     const quad: Instruction = {
       operation: '=',
       lhs: exprAddr,
+      rhs: -1,
       result: temp,
     }
 
@@ -461,6 +492,7 @@ class SymbolTable {
     const incrementCommit: Instruction = {
       operation: '=',
       lhs: incrementTemp,
+      rhs: -1,
       result: controlAddr,
     }
 
@@ -472,6 +504,8 @@ class SymbolTable {
 
     const jumpQuad: Instruction = {
       operation: 'goto',
+      lhs: -1,
+      rhs: -1,
       result: destination,
     }
 
@@ -479,6 +513,128 @@ class SymbolTable {
     log('***Added instruction***', jumpQuad)
 
     this.fillPendingJump(falseJump)
+  }
+
+  handleFuncEnd() {
+    // OPTIONAL handle funcTable as a class, to remove complexity from the symbolTable class
+    // this.funcTable.deleteVarsTable()
+    this.deleteVarsTable()
+    // this.funcTable.calcMemorySize()
+    const localMem = this.memoryMapper.getMemorySizeFor('local')
+    const temporalMem = this.memoryMapper.getMemorySizeFor('temporal')
+
+    this.memoryMapper.resetAddrFor('local')
+    this.memoryMapper.resetAddrFor('temporal')
+
+    this.getCurrentFunc().size = {
+      local: localMem,
+      temporal: temporalMem,
+    }
+  }
+
+  allocateReturnMemory() {
+    const currentType = this.getCurrentFunc().type as NonVoidType
+    const funcName = this.currentFunc
+    const varTable = this.getVarTable()
+    if (!varTable) {
+      this.getCurrentFunc().varsTable = {}
+      log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
+    }
+    const varEntry: VarTableEntry = {
+      type: currentType,
+      kind: 'funcReturn',
+      addr: this.memoryMapper.getAddrFor(currentType, 'global'),
+    }
+    varTable![funcName] = varEntry
+  }
+
+  handleReturn() {
+    const currentType = this.getCurrentFunc().type
+    const funcName = this.currentFunc
+    if (currentType !== 'void') {
+      // Get the temporal from the expression
+      const [returnAddress, returnType] = this.safePop(this.operandStack)
+      // Assert type
+      if (currentType !== returnType) throw new Error('Type mismatch between return expression and func return type')
+
+      if (!this.getVarEntry(funcName)) this.allocateReturnMemory()
+
+      // push quad
+      const quad: Instruction = {
+        operation: '=',
+        lhs: returnAddress,
+        rhs: -1,
+        result: this.getVarEntry(funcName)!.addr,
+      }
+      this.instructionList.push(quad)
+    }
+
+    this.instructionList.push({
+      operation: 'endfunc',
+      lhs: -1,
+      rhs: -1,
+      result: -1,
+    })
+  }
+
+  handleEra(funcName: string) {
+    const mappedFuncName = this.getLiteralAddr(funcName, 'string')
+    const quad: Instruction = {
+      operation: 'era',
+      lhs: mappedFuncName,
+      rhs: -1,
+      result: -1,
+    }
+    this.instructionList.push(quad)
+  }
+
+  processParam(funcName: string, argIdx: number) {
+    // already checked if func exists in verifyFuncExistance
+    const funcArgs = this.getFuncEntry(funcName)!.args
+    if (!funcArgs) throw new Error('Func signature mismatch: No args were defined in the func signature')
+    if (argIdx >= funcArgs.length) throw new Error('Func signature mismatch: Too many arguments')
+    const [paramAddr, paramType] = this.safePop(this.operandStack)
+    if (paramType !== funcArgs[argIdx]) throw new Error(`Func signature mismatch: Type mismatch for paramNo: ${argIdx}`)
+
+    const quad: Instruction = {
+      operation: 'param',
+      lhs: paramAddr,
+      rhs: -1,
+      result: this.getLiteralAddr(`param${argIdx}`, 'string'),
+    }
+
+    this.instructionList.push(quad)
+  }
+
+  verifySignatureCompletion(funcName: string, argIdx: number) {
+    // already checked if func exists in verifyFuncExistance
+    const funcArgs = this.getFuncEntry(funcName)!.args
+    if (argIdx !== funcArgs?.length) throw new Error('Func signature mismatch: missing params in funcCall')
+  }
+
+  genGosub(funcName: string) {
+    const funcEntry = this.getFuncEntry(funcName)!
+    const mappedFuncName = this.getLiteralAddr(funcName, 'string')
+    if (!funcEntry.funcStart) throw new Error('Weird error: the function start was still not defined')
+
+    const initAddr = funcEntry.funcStart
+    const quad: Instruction = {
+      operation: 'gosub',
+      lhs: mappedFuncName,
+      rhs: -1,
+      result: initAddr,
+    }
+    this.instructionList.push(quad)
+  }
+
+  handlePrint() {
+    const [operatorAddr, _] = this.safePop(this.operandStack)
+    this.instructionList.push({
+      operation: 'print',
+      lhs: operatorAddr,
+      rhs: -1,
+      result: -1,
+    })
   }
 }
 
