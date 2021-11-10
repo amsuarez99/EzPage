@@ -41,16 +41,16 @@ class SymbolTable {
     this.memoryMapper = new MemoryMapper()
   }
 
-  getCurrentState(): {
-    funcTable: FuncTable
-    operatorStack: Stack<Operator | '('>
-    operandStack: Stack<OperandStackItem>
-  } {
+  getCurrentState() {
     return {
       funcTable: this.funcTable,
       operatorStack: this.operatorStack,
       operandStack: this.operandStack,
     }
+  }
+
+  verifyFuncExistance(name: string) {
+    if (!this.getFuncEntry(name)) throw new Error("Can't find the function you are trying to call")
   }
 
   /**

@@ -345,7 +345,8 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public funcCall = this.RULE('funcCall', () => {
-    this.CONSUME(Lexer.Id)
+    const funcName = this.CONSUME(Lexer.Id).image
+    this.ACTION(() => this.symbolTable.verifyFuncExistance(funcName))
     this.CONSUME(Lexer.OParentheses)
     this.MANY_SEP({
       SEP: Lexer.Comma,
