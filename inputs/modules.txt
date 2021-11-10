@@ -2,11 +2,14 @@ page Modules
 
 string something(int hola, int hola2) {
   bool myBoolean = true
+  if(myBoolean == false) {
+    return "hola mundo"
+  }
   string myString = "hello world"
   int myInt = 61
-  float myFloat = 55.55
+  float myFloat = 56.55
   hola = 2
-  return
+  return "hola mundo 2"
 }
 
 void render() {

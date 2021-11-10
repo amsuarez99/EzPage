@@ -134,7 +134,7 @@ class SymbolTable {
    */
   getVarEntry(name: string, globalSearch = true): VarTableEntry | undefined {
     if (!globalSearch) return this.getCurrentFunc().varsTable?.[name]
-    return this.getCurrentFunc().varsTable?.[name] || this.getGlobalFunc().varsTable?.[name]
+    return this.getCurrentFunc()?.varsTable?.[name] || this.getGlobalFunc()?.varsTable?.[name]
   }
 
   handleProgramStart() {
@@ -162,6 +162,7 @@ class SymbolTable {
    */
   handleFuncRegistry(name: string, returnType: Type): void {
     if (this.getFuncEntry(name)) throw new Error('Duplicate Function Entry')
+    if (this.getVarEntry(name)) throw new Error("Duplicate identifier: can't name function as global variables")
     const funcStart = name === 'global' ? -1 : this.instructionList.length
     this.setCurrentFunc(name)
     this.funcTable[name] = {
@@ -529,35 +530,45 @@ class SymbolTable {
       local: localMem,
       temporal: temporalMem,
     }
+  }
 
-    // OPTIONAL handle quadList as a class, to remove complexity from the symbolTable
-    // this.quadrupleHandler.addFuncEnd()
+  allocateReturnMemory() {
+    const currentType = this.getCurrentFunc().type as NonVoidType
+    const funcName = this.currentFunc
+    const varTable = this.getVarTable()
+    if (!varTable) {
+      this.getCurrentFunc().varsTable = {}
+      log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
+    }
+    const varEntry: VarTableEntry = {
+      type: currentType,
+      kind: 'funcReturn',
+      addr: this.memoryMapper.getAddrFor(currentType, 'global'),
+    }
+    varTable![funcName] = varEntry
+  }
+
+  handleReturn() {
     const currentType = this.getCurrentFunc().type
     const funcName = this.currentFunc
-    if (currentType != 'void') {
-      const varReturn = this.memoryMapper.getAddrFor(currentType as NonVoidType, 'global')
+    if (currentType !== 'void') {
+      // Get the temporal from the expression
       const [returnAddress, returnType] = this.safePop(this.operandStack)
-      if (currentType == returnType) {
-        const varTable = this.getVarTable()
-        if (!varTable) {
-          this.getCurrentFunc().varsTable = {}
-          log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
-        }
-        const varEntry = {
-          type: currentType,
-          addr: varReturn,
-        }
-        varTable![funcName] = varEntry
-        this.instructionList.push({
-          operation: '=',
-          lhs: returnAddress,
-          rhs: -1,
-          result: varReturn
-        })
-      } else {
-        throw new Error("Return type mismatch")
+      // Assert type
+      if (currentType !== returnType) throw new Error('Type mismatch between return expression and func return type')
+
+      if (!this.getVarEntry(funcName)) this.allocateReturnMemory()
+
+      // push quad
+      const quad: Instruction = {
+        operation: '=',
+        lhs: returnAddress,
+        rhs: -1,
+        result: this.getVarEntry(funcName)!.addr,
       }
+      this.instructionList.push(quad)
     }
+
     this.instructionList.push({
       operation: 'endfunc',
       lhs: -1,

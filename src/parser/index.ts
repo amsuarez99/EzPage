@@ -347,11 +347,16 @@ class EzParser extends EmbeddedActionsParser {
   public funcCall = this.RULE('funcCall', () => {
     const funcName = this.CONSUME(Lexer.Id).image
     this.ACTION(() => this.symbolTable.verifyFuncExistance(funcName))
+    // this.ACTION(() => this.symbolTable.prepareParam())
     this.CONSUME(Lexer.OParentheses)
     this.MANY_SEP({
       SEP: Lexer.Comma,
-      DEF: () => this.SUBRULE(this.expression),
+      DEF: () => {
+        this.SUBRULE(this.expression)
+        // this.ACTION(() => this.symbolTable.verifyParam())
+      },
     })
+    // this.ACTION(() => this.symbolTable.areParamsFilled())
     this.CONSUME(Lexer.CParentheses)
   })
 
@@ -401,6 +406,7 @@ class EzParser extends EmbeddedActionsParser {
   public return = this.RULE('return', () => {
     this.CONSUME(Lexer.Return)
     this.OPTION(() => this.SUBRULE(this.expression))
+    this.ACTION(() => this.symbolTable.handleReturn())
   })
 
   public print = this.RULE('print', () => {

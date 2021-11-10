@@ -4,7 +4,7 @@ import internal from 'stream'
 export type NonVoidType = 'string' | 'float' | 'int' | 'bool'
 export type Type = 'void' | NonVoidType
 export type TypeError = 'Type Error'
-export type Kind = 'array' | 'matrix'
+export type Kind = 'array' | 'matrix' | 'funcReturn'
 export type ScopeSizeEntry = Record<NonVoidType, number>
 
 // ! Variable Directory Types
