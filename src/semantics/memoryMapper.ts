@@ -118,7 +118,8 @@ export default class MemoryMapper {
 
   resetAddrFor(scope: Scope, type?: NonVoidType) {
     if (type) {
-      this.memoryRanges[scope][type].curr = this.memoryRanges[scope][type].curr
+      this.memoryRanges[scope][type].curr = this.memoryRanges[scope][type].min
+      return
     }
 
     // default behaviour, every type of the received scope is reset

@@ -314,12 +314,12 @@ class SymbolTable {
 
   // Flow Control
   handleCondition(): void {
-    const [conditionName, conditionType] = this.safePop(this.operandStack)
+    const [conditionAddress, conditionType] = this.safePop(this.operandStack)
     if (conditionType !== 'bool') throw new Error(`Expecting condition type to be boolean, found: ${conditionType}`)
 
     const quad: Instruction = {
       operation: 'gotoF',
-      lhs: conditionName,
+      lhs: conditionAddress,
       rhs: -1,
       result: -1,
     }
@@ -532,6 +532,32 @@ class SymbolTable {
 
     // OPTIONAL handle quadList as a class, to remove complexity from the symbolTable
     // this.quadrupleHandler.addFuncEnd()
+    const currentType = this.getCurrentFunc().type
+    const funcName = this.currentFunc
+    if (currentType != 'void') {
+      const varReturn = this.memoryMapper.getAddrFor(currentType as NonVoidType, 'global')
+      const [returnAddress, returnType] = this.safePop(this.operandStack)
+      if (currentType == returnType) {
+        const varTable = this.getVarTable()
+        if (!varTable) {
+          this.getCurrentFunc().varsTable = {}
+          log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
+        }
+        const varEntry = {
+          type: currentType,
+          addr: varReturn,
+        }
+        varTable![funcName] = varEntry
+        this.instructionList.push({
+          operation: '=',
+          lhs: returnAddress,
+          rhs: -1,
+          result: varReturn
+        })
+      } else {
+        throw new Error("Return type mismatch")
+      }
+    }
     this.instructionList.push({
       operation: 'endfunc',
       lhs: -1,
