@@ -3,13 +3,13 @@ page Modules
 string something(int hola, int hola2) {
   bool myBoolean = true
   if(myBoolean == false) {
-    return "hola mundo"
+    return "hola"
   }
   string myString = "hello world"
   int myInt = 61
   float myFloat = 56.55
   hola = 2
-  return "hola mundo 2"
+  return myString
 }
 
 int secondFunction(int someVar) {

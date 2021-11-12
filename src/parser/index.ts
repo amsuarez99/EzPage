@@ -112,7 +112,6 @@ class EzParser extends EmbeddedActionsParser {
     this.OPTION(() => this.SUBRULE(this.params))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.block)
-    this.ACTION(() => this.symbolTable.handleReturn())
     this.ACTION(() => this.symbolTable.handleFuncEnd())
   })
 
