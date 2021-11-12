@@ -32,7 +32,6 @@ export type FuncTable = Record<string, FuncTableEntry>
 // | something  | double  | none  | 1                         |
 // | otherThing | int     | array | 2                         |
 export interface VarTableEntry {
-  type: NonVoidType
   kind?: Kind
   addr: number
 }
@@ -46,8 +45,6 @@ export type Operator = '+' | '-' | '*' | '/' | '<' | '>' | '<=' | '>=' | '==' | 
 export type OperatorRecord = Record<NonVoidType, Record<NonVoidType, NonVoidType | TypeError>>
 export type SemanticCube = Record<Operator, OperatorRecord>
 
-// Stores a tuple of (address, type)
-export type OperandStackItem = [number, NonVoidType]
 export type FuncOperation = 'gosub' | 'endfunc' | 'param' | 'era'
 export type GotoOperation = 'goto' | 'gotoF' | 'gotoT'
 export type ExtraOperation = 'print'

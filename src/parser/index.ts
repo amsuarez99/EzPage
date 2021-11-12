@@ -31,6 +31,7 @@ class EzParser extends EmbeddedActionsParser {
     this.symbolTable.instructionList.forEach((instruction, idx) => log(idx, instruction))
     log(this.symbolTable.funcTable)
     log(this.symbolTable.literalTable)
+    log(this.symbolTable.memoryMapper.memoryRanges)
   })
 
   // global variables should be different because they have to be declared constantly
@@ -112,6 +113,8 @@ class EzParser extends EmbeddedActionsParser {
     this.OPTION(() => this.SUBRULE(this.params))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.block)
+    // for implicit return
+    if (returnType === 'void') this.ACTION(() => this.symbolTable.handleReturn())
     this.ACTION(() => this.symbolTable.handleFuncEnd())
   })
 
@@ -439,6 +442,7 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.CParentheses)
     this.ACTION(() => this.symbolTable.handleRenderRegistry())
     this.SUBRULE(this.renderBlock)
+    this.ACTION(() => this.symbolTable.handleReturn())
     this.ACTION(() => this.symbolTable.handleFuncEnd())
   })
 
