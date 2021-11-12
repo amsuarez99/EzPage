@@ -28,6 +28,7 @@ class SymbolTable {
   instructionList: Instruction[]
   literalTable: LiteralTable
   memoryMapper: MemoryMapper
+  voidHasReturn = false;
 
   constructor() {
     this.funcTable = {}
@@ -518,7 +519,11 @@ class SymbolTable {
   handleFuncEnd() {
     // OPTIONAL handle funcTable as a class, to remove complexity from the symbolTable class
     // this.funcTable.deleteVarsTable()
+    if (!(this.getCurrentFunc().type !== 'void' && this.voidHasReturn) && this.currentFunc != 'render') {
+      throw new Error("Non void function has no return value.")
+    }
     this.deleteVarsTable()
+    this.voidHasReturn = false;
     // this.funcTable.calcMemorySize()
     const localMem = this.memoryMapper.getMemorySizeFor('local')
     const temporalMem = this.memoryMapper.getMemorySizeFor('temporal')
@@ -558,7 +563,7 @@ class SymbolTable {
       if (currentType !== returnType) throw new Error('Type mismatch between return expression and func return type')
 
       if (!this.getVarEntry(funcName)) this.allocateReturnMemory()
-
+      this.voidHasReturn = true;
       // push quad
       const quad: Instruction = {
         operation: '=',
