@@ -4,7 +4,6 @@ import {
   Instruction,
   Kind,
   NonVoidType,
-  OperandStackItem,
   Operator,
   semanticCube,
   Type,
@@ -16,14 +15,15 @@ import { log } from '../logger'
 import { Stack } from 'mnemonist'
 import { GotoOperation } from './types'
 import { isNumerical } from './utils'
-import MemoryMapper from './memoryMapper'
+import MemoryMapper, { MemoryBuilder } from './memoryMapper'
 
 class SymbolTable {
   funcTable: FuncTable
   currentFunc: string
   // '(' is for fake floor
   operatorStack: Stack<Operator | '('>
-  operandStack: Stack<OperandStackItem>
+  // to store address
+  operandStack: Stack<number>
   jumpStack: Stack<number>
   instructionList: Instruction[]
   literalTable: LiteralTable
@@ -39,7 +39,12 @@ class SymbolTable {
     this.jumpStack = new Stack()
     this.instructionList = []
     this.literalTable = {}
-    this.memoryMapper = new MemoryMapper()
+    const memoryBuilder = new MemoryBuilder()
+    memoryBuilder.addMemorySegment('global', [{ name: 'int', size: 1000 }, { name: 'float', size: 1000 }, { name: 'string', size: 1000 }, { name: 'bool', size: 1000 }, { name: 'pointer', size: 1000 }])
+    memoryBuilder.addMemorySegment('local', [{ name: 'int', size: 1000 }, { name: 'float', size: 1000 }, { name: 'string', size: 1000 }, { name: 'bool', size: 1000 }, { name: 'pointer', size: 1000 }])
+    memoryBuilder.addMemorySegment('temporal', [{ name: 'int', size: 1000 }, { name: 'float', size: 1000 }, { name: 'string', size: 1000 }, { name: 'bool', size: 1000 }, { name: 'pointer', size: 1000 }])
+    memoryBuilder.addMemorySegment('constant', [{ name: 'int', size: 1000 }, { name: 'float', size: 1000 }, { name: 'string', size: 1000 }, { name: 'bool', size: 1000 }, { name: 'pointer', size: 1000 }])
+    this.memoryMapper = memoryBuilder.getMemory()
   }
 
   getCurrentState() {
@@ -212,8 +217,7 @@ class SymbolTable {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const varTable = this.getVarTable()!
       const scope = this.currentFunc === 'global' ? 'global' : 'local'
-      const varEntry = {
-        type,
+      const varEntry: VarTableEntry = {
         kind,
         addr: this.memoryMapper.getAddrFor(type, scope),
       }
@@ -229,10 +233,10 @@ class SymbolTable {
 
   doOperation(): void {
     const operator = this.safePop(this.operatorStack) as Operator
-    const right = this.safePop(this.operandStack)
-    const left = this.safePop(this.operandStack)
-    const [rightOperandAddr, rightOperandType] = right
-    const [leftOperandAddr, leftOperandType] = left
+    const rightOperandAddr = this.safePop(this.operandStack)
+    const leftOperandAddr = this.safePop(this.operandStack)
+    const { type: leftOperandType } = this.memoryMapper.getTypeOn(leftOperandAddr) as { type: NonVoidType }
+    const { type: rightOperandType } = this.memoryMapper.getTypeOn(rightOperandAddr) as { type: NonVoidType }
     const resultType = semanticCube[operator][leftOperandType][rightOperandType]
     if (resultType === 'Type Error') throw new Error('Type Mismatch')
 
@@ -245,9 +249,8 @@ class SymbolTable {
     }
 
     // push the temporal to the operand stack
-    const temp = [temporalAddr, resultType] as OperandStackItem
-    this.operandStack.push(temp)
-    log(`pushed __temporal__ to operandStack:`, temp)
+    this.operandStack.push(temporalAddr)
+    log(`pushed __temporal__ to operandStack:`, temporalAddr)
 
     this.instructionList.push(quadruple)
     log('***Added instruction***', quadruple)
@@ -255,10 +258,10 @@ class SymbolTable {
 
   doAssignmentOperation(): void {
     const operator = this.safePop(this.operatorStack, '=') as Operator
-    const right = this.safePop(this.operandStack)
-    const left = this.safePop(this.operandStack)
-    const [rightOperandAddr, rightOperandType] = right
-    const [leftOperandAddr, leftOperandType] = left
+    const rightOperandAddr = this.safePop(this.operandStack)
+    const leftOperandAddr = this.safePop(this.operandStack)
+    const { type: leftOperandType } = this.memoryMapper.getTypeOn(leftOperandAddr) as { type: NonVoidType }
+    const { type: rightOperandType } = this.memoryMapper.getTypeOn(rightOperandAddr) as { type: NonVoidType }
     const resultType = semanticCube[operator][leftOperandType][rightOperandType]
     if (resultType === 'Type Error') throw new Error('Type Mismatch')
     const quadruple: Instruction = {
@@ -274,14 +277,15 @@ class SymbolTable {
 
   pushLiteral(value: string, type: NonVoidType): void {
     const addr = this.getLiteralAddr(value, type)
-    this.operandStack.push([addr, type])
+    this.operandStack.push(addr)
     log('Added literal to stack', { value, type })
   }
 
   pushOperand(identifier: string): void {
     if (!this.getVarEntry(identifier)) throw new Error('Unexisting identifier')
-    const { type, addr } = this.getVarEntry(identifier) as VarTableEntry
-    this.operandStack.push([addr, type])
+    const { addr } = this.getVarEntry(identifier) as VarTableEntry
+    const { type } = this.memoryMapper.getTypeOn(addr)
+    this.operandStack.push(addr)
     log(`pushed to operand stack: [${identifier} with addr ${addr} of type ${type}]`)
   }
 
@@ -316,7 +320,8 @@ class SymbolTable {
 
   // Flow Control
   handleCondition(): void {
-    const [conditionAddress, conditionType] = this.safePop(this.operandStack)
+    const conditionAddress = this.safePop(this.operandStack)
+    const { type: conditionType } = this.memoryMapper.getTypeOn(conditionAddress)
     if (conditionType !== 'bool') throw new Error(`Expecting condition type to be boolean, found: ${conditionType}`)
 
     const quad: Instruction = {
@@ -379,19 +384,21 @@ class SymbolTable {
   storeControlVar(identifier: string): void {
     const varEntry = this.getVarEntry(identifier)
     if (!varEntry) throw new Error('Unexisting identifier in for loop')
-    const { type, addr } = varEntry
+    const { addr } = varEntry
+    const { type } = this.memoryMapper.getTypeOn(addr) as { type: NonVoidType }
     if (!isNumerical(type)) throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${type}`)
-    this.operandStack.push([addr, type])
+    this.operandStack.push(addr)
   }
 
   handleControlAssignment(): number {
-    const [exprName, exprType] = this.safePop(this.operandStack)
+    const exprAddr = this.safePop(this.operandStack)
+    const { type: exprType } = this.memoryMapper.getTypeOn(exprAddr) as { type: NonVoidType }
     if (!isNumerical(exprType))
       throw new Error(`Expected expression to be of type 'int' or 'float', found: ${exprType} `)
 
-    const controlVariable = this.safePop(this.operandStack)
-    if (!controlVariable) throw new Error(`Weird error: Expected to find control variable but found ${controlVariable}`)
-    const [controlAddr, controlType] = controlVariable
+    const controlAddr = this.safePop(this.operandStack)
+    if (!controlAddr) throw new Error(`Weird error: Expected to find control variable but found ${controlAddr}`)
+    const { type: controlType } = this.memoryMapper.getTypeOn(controlAddr) as { type: NonVoidType }
 
     const resType = semanticCube['='][controlType][exprType]
     if (resType === 'Type Error') throw new Error('Type Mismatch')
@@ -410,7 +417,8 @@ class SymbolTable {
 
   handleControlCompare(controlName: string): void {
     // The limit should be in the operand stack, we get that and add it to the localVariables
-    const [exprAddr, exprType] = this.safePop(this.operandStack)
+    const exprAddr = this.safePop(this.operandStack)
+    const { type: exprType } = this.memoryMapper.getTypeOn(exprAddr) as { type: NonVoidType }
     if (!isNumerical(exprType))
       throw new Error(`Expected expression to be of type 'int' or 'float', found: ${exprType} `)
 
@@ -455,7 +463,8 @@ class SymbolTable {
   }
 
   storeStep(): number {
-    const [exprAddr, exprType] = this.safePop(this.operandStack)
+    const exprAddr = this.safePop(this.operandStack)
+    const { type: exprType } = this.memoryMapper.getTypeOn(exprAddr) as { type: NonVoidType }
 
     if (!isNumerical(exprType))
       throw new Error(`Loop control variable should be of type 'int' or 'double', found: ${exprType}`)
@@ -546,7 +555,6 @@ class SymbolTable {
       log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
     }
     const varEntry: VarTableEntry = {
-      type: currentType,
       kind: 'funcReturn',
       addr: this.memoryMapper.getAddrFor(currentType, 'global'),
     }
@@ -558,9 +566,10 @@ class SymbolTable {
     const funcName = this.currentFunc
     if (currentType !== 'void') {
       // Get the temporal from the expression
-      const [returnAddress, returnType] = this.safePop(this.operandStack)
+      const returnAddress = this.safePop(this.operandStack)
+      const { type: returnType } = this.memoryMapper.getTypeOn(returnAddress) as { type: NonVoidType }
       // Assert type
-      if (currentType !== returnType) throw new Error('Type mismatch between return expression and func return type')
+      if (currentType !== returnType) throw new Error(`Type mismatch between return expression and func return type ${currentType}, ${returnType}`)
 
       if (!this.getVarEntry(funcName)) this.allocateReturnMemory()
       this.voidHasReturn = true;
@@ -598,14 +607,15 @@ class SymbolTable {
     const funcArgs = this.getFuncEntry(funcName)!.args
     if (!funcArgs) throw new Error('Func signature mismatch: No args were defined in the func signature')
     if (argIdx >= funcArgs.length) throw new Error('Func signature mismatch: Too many arguments')
-    const [paramAddr, paramType] = this.safePop(this.operandStack)
+    const paramAddr = this.safePop(this.operandStack)
+    const { type: paramType } = this.memoryMapper.getTypeOn(paramAddr) as { type: NonVoidType }
     if (paramType !== funcArgs[argIdx]) throw new Error(`Func signature mismatch: Type mismatch for paramNo: ${argIdx}`)
 
     const quad: Instruction = {
       operation: 'param',
       lhs: paramAddr,
       rhs: -1,
-      result: this.getLiteralAddr(`param${argIdx}`, 'string'),
+      result: argIdx,
     }
 
     this.instructionList.push(quad)
@@ -633,7 +643,7 @@ class SymbolTable {
   }
 
   handlePrint() {
-    const [operatorAddr, _] = this.safePop(this.operandStack)
+    const operatorAddr = this.safePop(this.operandStack)
     this.instructionList.push({
       operation: 'print',
       lhs: operatorAddr,

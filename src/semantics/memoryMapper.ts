@@ -1,100 +1,14 @@
 import { ScopeSizeEntry } from 'semantics'
 import { NonVoidType, Scope } from './types'
 
+
+type MemoryRange = Record<string, Record<'min' | 'max' | 'curr', number>>
+
 export default class MemoryMapper {
-  memoryRanges: Record<Scope, Record<NonVoidType, Record<'min' | 'max' | 'curr', number>>>
+  memoryRanges!: Record<string, MemoryRange>
 
   constructor() {
-    this.memoryRanges = {
-      global: {
-        int: {
-          min: 0,
-          curr: 0,
-          max: 999,
-        },
-        float: {
-          min: 1000,
-          curr: 1000,
-          max: 1999,
-        },
-        string: {
-          min: 2000,
-          curr: 2000,
-          max: 2999,
-        },
-        bool: {
-          min: 3000,
-          curr: 3000,
-          max: 3999,
-        },
-      },
-      local: {
-        int: {
-          min: 4000,
-          curr: 4000,
-          max: 4999,
-        },
-        float: {
-          min: 5000,
-          curr: 5000,
-          max: 5999,
-        },
-        string: {
-          min: 6000,
-          curr: 6000,
-          max: 6999,
-        },
-        bool: {
-          min: 7000,
-          curr: 7000,
-          max: 7999,
-        },
-      },
-      temporal: {
-        int: {
-          min: 8000,
-          curr: 8000,
-          max: 8999,
-        },
-        float: {
-          min: 9000,
-          curr: 9000,
-          max: 9999,
-        },
-        string: {
-          min: 10000,
-          curr: 10000,
-          max: 10999,
-        },
-        bool: {
-          min: 11000,
-          curr: 11000,
-          max: 11999,
-        },
-      },
-      constant: {
-        int: {
-          min: 12000,
-          curr: 12000,
-          max: 12999,
-        },
-        float: {
-          min: 13000,
-          curr: 13000,
-          max: 13999,
-        },
-        string: {
-          min: 14000,
-          curr: 14000,
-          max: 14999,
-        },
-        bool: {
-          min: 15000,
-          curr: 15000,
-          max: 15999,
-        },
-      },
-    }
+    this.memoryRanges = {}
   }
 
   getAddrFor(type: NonVoidType, scope: Scope) {
@@ -133,116 +47,47 @@ export default class MemoryMapper {
   }
 
   getTypeOn(address: number) {
-    if (address < 0 || address > 15999) {
-      throw new Error(`Out of memory range for address: ${address}`)
+    for (const scope in this.memoryRanges) {
+      for (const type in this.memoryRanges[scope]) {
+        const { min, max } = this.memoryRanges[scope][type]
+        if (address >= min && address <= max) return { type, scope }
+      }
     }
 
-    if (address >= 12000) {
-      //constant
-      if (address >= 12000 && address <= 12999) {
-        return { type: 'int', scope: 'constant' }
-      } else if (address >= 13000 && address <= 1399) {
-        return { type: 'float', scope: 'constant' }
-      } else if (address >= 14000 && address <= 14999) {
-        return { type: 'string', scope: 'constant' }
-      } else {
-        return { type: 'bool', scope: 'constant' }
-      }
-    } else if (address >= 8000 && address <= 11999) {
-      //temporal
-      if (address >= 8000 && address <= 8999) {
-        // return 'temporal int'
-        return { type: 'int', scope: 'temporal' }
-      } else if (address >= 9000 && address <= 9999) {
-        return { type: 'float', scope: 'temporal' }
-      } else if (address >= 10000 && address <= 10999) {
-        return { type: 'string', scope: 'temporal' }
-      } else {
-        return { type: 'bool', scope: 'temporal' }
-      }
-    } else if (address >= 4000 && address <= 7999) {
-      //local
-      if (address >= 4000 && address <= 4999) {
-        return { type: 'int', scope: 'local' }
-      } else if (address >= 5000 && address <= 5999) {
-        return { type: 'float', scope: 'local' }
-      } else if (address >= 6000 && address <= 6999) {
-        return { type: 'string', scope: 'local' }
-      } else {
-        return { type: 'bool', scope: 'local' }
-      }
-    } else {
-      // global
-      if (address >= 0 && address <= 999) {
-        return { type: 'int', scope: 'global' }
-      } else if (address >= 1000 && address <= 1999) {
-        return { type: 'float', scope: 'global' }
-      } else if (address >= 2000 && address <= 2999) {
-        return { type: 'string', scope: 'global' }
-      } else {
-        return { type: 'bool', scope: 'global' }
-      }
-    }
+    throw new Error(`Out of memory range for address: ${address}`)
   }
 }
 
-/*
-Memory Map
-------------------------------------
-|        Global Variables          |
-|----------------------------------|
-| int                      |0      |
-|                          |999    |
-|----------------------------------|
-| float                    |1000   |
-|                          |1999   |
-|----------------------------------|
-| string                   |2000   |
-|                          |2999   |
-|----------------------------------|
-| boolean                  |3000   |
-|                          |3999   |
-|----------------------------------|
-|        Local Variables           |
-|----------------------------------|
-| int                      |4000   |
-|                          |4999   |
-|----------------------------------|
-| float                    |5000   |
-|                          |5999   |
-|----------------------------------|
-| string                   |6000   |
-|                          |6999   |
-|----------------------------------|
-| boolean                  |7000   |
-|                          |7999   |
-|----------------------------------|
-|        Temporal Variables        |
-|----------------------------------|
-| int                      |8000   |
-|                          |8999   |
-|----------------------------------|
-| float                    |9000   |
-|                          |9999   |
-|----------------------------------|
-| string                   |10000  |
-|                          |10999  |
-|----------------------------------|
-| boolean                  |11000  |
-|                          |11999  |
-|----------------------------------|
-|        Constant Variables        |
-|----------------------------------|
-| int                      |12000  |
-|                          |12999  |
-|----------------------------------|
-| float                    |13000  |
-|                          |13999  |
-|----------------------------------|
-| string                   |14000  |
-|                          |14999  |
-|----------------------------------|
-| boolean                  |15000  |
-|                          |15999  |
-------------------------------------
-*/
+export class MemoryBuilder {
+  memoryMapper!: MemoryMapper
+  addressCount!: number
+
+  constructor() {
+    this.reset()
+  }
+
+  addMemorySegment(name: string, types: { name: string, size: number }[]) {
+    const memoryRanges = types.reduce((accum, type) => {
+      if (accum[type.name]) throw new Error('Repeated type found in arguments')
+      accum[type.name] = {
+        min: this.addressCount,
+        max: this.addressCount + type.size - 1,
+        curr: this.addressCount,
+      }
+      this.addressCount += type.size
+      return accum
+    }, {} as any) as MemoryRange
+    this.memoryMapper.memoryRanges[name] = memoryRanges
+  }
+
+  reset() {
+    this.addressCount = 0
+    this.memoryMapper = new MemoryMapper()
+  }
+
+  getMemory() {
+    const memoryMapper = this.memoryMapper
+    this.reset()
+    return memoryMapper
+  }
+}

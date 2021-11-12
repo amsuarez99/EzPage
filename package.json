@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "chevrotain": "^9.1.0",
+    "lodash": "^4.17.21",
     "mnemonist": "^0.38.4"
   }
 }
