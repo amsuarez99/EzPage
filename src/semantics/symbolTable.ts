@@ -549,16 +549,16 @@ class SymbolTable {
   allocateReturnMemory() {
     const currentType = this.getCurrentFunc().type as NonVoidType
     const funcName = this.currentFunc
-    const varTable = this.getVarTable()
+    const varTable = this.getVarTable('global')
     if (!varTable) {
-      this.getCurrentFunc().varsTable = {}
+      this.getGlobalFunc().varsTable = {}
       log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
     }
     const varEntry: VarTableEntry = {
       kind: 'funcReturn',
       addr: this.memoryMapper.getAddrFor(currentType, 'global'),
     }
-    varTable![funcName] = varEntry
+    this.getVarTable('global')![funcName] = varEntry
   }
 
   handleReturn() {
@@ -624,7 +624,7 @@ class SymbolTable {
   verifySignatureCompletion(funcName: string, argIdx: number) {
     // already checked if func exists in verifyFuncExistance
     const funcArgs = this.getFuncEntry(funcName)!.args
-    if (argIdx !== funcArgs?.length) throw new Error('Func signature mismatch: missing params in funcCall')
+    if (funcArgs && argIdx !== funcArgs.length) throw new Error('Func signature mismatch: missing params in funcCall')
   }
 
   genGosub(funcName: string) {
