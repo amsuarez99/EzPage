@@ -45,7 +45,7 @@ export type Operator = '+' | '-' | '*' | '/' | '<' | '>' | '<=' | '>=' | '==' | 
 export type OperatorRecord = Record<NonVoidType, Record<NonVoidType, NonVoidType | TypeError>>
 export type SemanticCube = Record<Operator, OperatorRecord>
 
-export type FuncOperation = 'gosub' | 'endfunc' | 'param' | 'era'
+export type FuncOperation = 'gosub' | 'endfunc' | 'param' | 'era' | 'return'
 export type GotoOperation = 'goto' | 'gotoF' | 'gotoT'
 export type ExtraOperation = 'print'
 export type Operation = Operator | GotoOperation | FuncOperation | ExtraOperation

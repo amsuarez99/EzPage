@@ -28,7 +28,7 @@ class SymbolTable {
   instructionList: Instruction[]
   literalTable: LiteralTable
   memoryMapper: MemoryMapper
-  voidHasReturn = false;
+  voidHasReturn = false
 
   constructor() {
     this.funcTable = {}
@@ -40,10 +40,34 @@ class SymbolTable {
     this.instructionList = []
     this.literalTable = {}
     const memoryBuilder = new MemoryBuilder()
-    memoryBuilder.addMemorySegment('global', [{ name: 'int', size: 1000 }, { name: 'float', size: 1000 }, { name: 'string', size: 1000 }, { name: 'bool', size: 1000 }, { name: 'pointer', size: 1000 }])
-    memoryBuilder.addMemorySegment('local', [{ name: 'int', size: 1000 }, { name: 'float', size: 1000 }, { name: 'string', size: 1000 }, { name: 'bool', size: 1000 }, { name: 'pointer', size: 1000 }])
-    memoryBuilder.addMemorySegment('temporal', [{ name: 'int', size: 1000 }, { name: 'float', size: 1000 }, { name: 'string', size: 1000 }, { name: 'bool', size: 1000 }, { name: 'pointer', size: 1000 }])
-    memoryBuilder.addMemorySegment('constant', [{ name: 'int', size: 1000 }, { name: 'float', size: 1000 }, { name: 'string', size: 1000 }, { name: 'bool', size: 1000 }, { name: 'pointer', size: 1000 }])
+    memoryBuilder.addMemorySegment('global', [
+      { name: 'int', size: 1000 },
+      { name: 'float', size: 1000 },
+      { name: 'string', size: 1000 },
+      { name: 'bool', size: 1000 },
+      { name: 'pointer', size: 1000 },
+    ])
+    memoryBuilder.addMemorySegment('local', [
+      { name: 'int', size: 1000 },
+      { name: 'float', size: 1000 },
+      { name: 'string', size: 1000 },
+      { name: 'bool', size: 1000 },
+      { name: 'pointer', size: 1000 },
+    ])
+    memoryBuilder.addMemorySegment('temporal', [
+      { name: 'int', size: 1000 },
+      { name: 'float', size: 1000 },
+      { name: 'string', size: 1000 },
+      { name: 'bool', size: 1000 },
+      { name: 'pointer', size: 1000 },
+    ])
+    memoryBuilder.addMemorySegment('constant', [
+      { name: 'int', size: 1000 },
+      { name: 'float', size: 1000 },
+      { name: 'string', size: 1000 },
+      { name: 'bool', size: 1000 },
+      { name: 'pointer', size: 1000 },
+    ])
     this.memoryMapper = memoryBuilder.getMemory()
   }
 
@@ -174,6 +198,10 @@ class SymbolTable {
     this.funcTable[name] = {
       type: returnType,
       funcStart,
+    }
+    // register the function as a global variable if it
+    if (returnType !== 'void') {
+      this.allocateReturnMemory()
     }
     log(`Added funcEntry: ${name}`, this.getCurrentFunc())
   }
@@ -528,11 +556,14 @@ class SymbolTable {
   handleFuncEnd() {
     // OPTIONAL handle funcTable as a class, to remove complexity from the symbolTable class
     // this.funcTable.deleteVarsTable()
-    if (!(this.getCurrentFunc().type !== 'void' && this.voidHasReturn) && this.currentFunc != 'render') {
-      throw new Error("Non void function has no return value.")
-    }
+    this.instructionList.push({
+      operation: 'endfunc',
+      lhs: -1,
+      rhs: -1,
+      result: -1,
+    })
+
     this.deleteVarsTable()
-    this.voidHasReturn = false;
     // this.funcTable.calcMemorySize()
     const localMem = this.memoryMapper.getMemorySizeFor('local')
     const temporalMem = this.memoryMapper.getMemorySizeFor('temporal')
@@ -562,33 +593,35 @@ class SymbolTable {
   }
 
   handleReturn() {
-    const currentType = this.getCurrentFunc().type
+    const currentFuncType = this.getCurrentFunc().type
     const funcName = this.currentFunc
-    if (currentType !== 'void') {
+    if (currentFuncType === 'void') {
       // Get the temporal from the expression
-      const returnAddress = this.safePop(this.operandStack)
-      const { type: returnType } = this.memoryMapper.getTypeOn(returnAddress) as { type: NonVoidType }
-      // Assert type
-      if (currentType !== returnType) throw new Error(`Type mismatch between return expression and func return type ${currentType}, ${returnType}`)
-
-      if (!this.getVarEntry(funcName)) this.allocateReturnMemory()
-      this.voidHasReturn = true;
-      // push quad
-      const quad: Instruction = {
-        operation: '=',
-        lhs: returnAddress,
+      this.instructionList.push({
+        operation: 'return',
+        lhs: -1,
         rhs: -1,
-        result: this.getVarEntry(funcName)!.addr,
-      }
-      this.instructionList.push(quad)
+        result: -1,
+      })
+      return
     }
 
-    this.instructionList.push({
-      operation: 'endfunc',
+    const returnExpressionAddr = this.safePop(this.operandStack)
+    const { type: returnType } = this.memoryMapper.getTypeOn(returnExpressionAddr) as { type: NonVoidType }
+    // Assert type
+    if (currentFuncType !== returnType)
+      throw new Error(`Type mismatch between return expression and func return type ${currentFuncType}, ${returnType}`)
+
+    if (!this.getVarTable('global'))
+      throw new Error('Weird error, there is no memory allocated for the current function')
+    // push quad
+    const quad: Instruction = {
+      operation: 'return',
       lhs: -1,
       rhs: -1,
-      result: -1,
-    })
+      result: returnExpressionAddr,
+    }
+    this.instructionList.push(quad)
   }
 
   handleEra(funcName: string) {
@@ -629,6 +662,7 @@ class SymbolTable {
 
   genGosub(funcName: string) {
     const funcEntry = this.getFuncEntry(funcName)!
+    const type = funcEntry.type!
     const mappedFuncName = this.getLiteralAddr(funcName, 'string')
     if (!funcEntry.funcStart) throw new Error('Weird error: the function start was still not defined')
 
@@ -640,6 +674,18 @@ class SymbolTable {
       result: initAddr,
     }
     this.instructionList.push(quad)
+
+    if (type !== 'void') {
+      // gen another quad to store the function value
+      const funcReturn: Instruction = {
+        operation: '=',
+        lhs: mappedFuncName,
+        rhs: -1,
+        result: this.memoryMapper.getAddrFor(type, 'local'),
+      }
+
+      this.instructionList.push(funcReturn)
+    }
   }
 
   handlePrint() {
