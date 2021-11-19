@@ -233,13 +233,13 @@ class SymbolTable {
    * type: the type of the variable (int, float, string, etc.)
    * kind: the kind of the variable (matrix, array)
    */
-  addVars(...args: { name: string; type: NonVoidType; kind?: Kind }[]): void {
+  addVars(...args: { name: string; type: NonVoidType; kind?: Kind; dim?: number[] }[]): void {
     if (!this.getVarTable()) {
       this.getCurrentFunc().varsTable = {}
       log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
     }
     args.forEach((arg) => {
-      const { type, name, kind } = arg
+      const { type, name, kind, dim } = arg
       // disable global search, only care about current scope
       if (this.getVarEntry(name, false)) throw new Error('Duplicate Identifier')
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -247,8 +247,13 @@ class SymbolTable {
       const scope = this.currentFunc === 'global' ? 'global' : 'local'
       const varEntry: VarTableEntry = {
         kind,
+        dim,
         addr: this.memoryMapper.getAddrFor(type, scope),
       }
+
+      if (kind === 'array') this.memoryMapper.offsetMemory(type, scope, dim![0] - 1)
+      if (kind === 'matrix') this.memoryMapper.offsetMemory(type, scope, dim![0] * dim![1] - 1)
+
       varTable[name] = varEntry
       log(`Added var __${name}__ to varsTable of ${this.currentFunc}`, varEntry)
     })
@@ -262,11 +267,32 @@ class SymbolTable {
   doOperation(): void {
     const operator = this.safePop(this.operatorStack) as Operator
     const rightOperandAddr = this.safePop(this.operandStack)
+    let { type: rightOperandType } = this.memoryMapper.getTypeOn(rightOperandAddr) as { type: NonVoidType | 'pointer' }
+    if (rightOperandType === 'pointer') {
+      // get the type of the pointer
+      const rightOperandRealAddr = this.safePop(this.operandStack)
+      const { type: rightOperandRealType } = this.memoryMapper.getTypeOn(rightOperandRealAddr) as {
+        type: NonVoidType | 'pointer'
+      }
+      rightOperandType = rightOperandRealType
+    }
+
     const leftOperandAddr = this.safePop(this.operandStack)
-    const { type: leftOperandType } = this.memoryMapper.getTypeOn(leftOperandAddr) as { type: NonVoidType }
-    const { type: rightOperandType } = this.memoryMapper.getTypeOn(rightOperandAddr) as { type: NonVoidType }
-    const resultType = semanticCube[operator][leftOperandType][rightOperandType]
-    if (resultType === 'Type Error') throw new Error('Type Mismatch')
+    let { type: leftOperandType } = this.memoryMapper.getTypeOn(leftOperandAddr) as { type: NonVoidType | 'pointer' }
+    if (leftOperandType === 'pointer') {
+      // get the type of the pointer
+      const leftOperandRealAddr = this.safePop(this.operandStack)
+      const { type: leftOperandRealType } = this.memoryMapper.getTypeOn(leftOperandRealAddr) as {
+        type: NonVoidType | 'pointer'
+      }
+      leftOperandType = leftOperandRealType
+    }
+
+    const resultType = semanticCube[operator][leftOperandType as NonVoidType][rightOperandType as NonVoidType]
+    if (resultType === 'Type Error')
+      throw new Error(
+        `Type Mismatch, trying to do operation: ${operator} on ${leftOperandType} and ${rightOperandType}`,
+      )
 
     const temporalAddr = this.memoryMapper.getAddrFor(resultType, 'temporal')
     const quadruple: Instruction = {
@@ -287,11 +313,33 @@ class SymbolTable {
   doAssignmentOperation(): void {
     const operator = this.safePop(this.operatorStack, '=') as Operator
     const rightOperandAddr = this.safePop(this.operandStack)
+    let { type: rightOperandType } = this.memoryMapper.getTypeOn(rightOperandAddr) as { type: NonVoidType | 'pointer' }
+    if (rightOperandType === 'pointer') {
+      // get the type of the pointer
+      const rightOperandRealAddr = this.safePop(this.operandStack)
+      const { type: rightOperandRealType } = this.memoryMapper.getTypeOn(rightOperandRealAddr) as {
+        type: NonVoidType | 'pointer'
+      }
+      rightOperandType = rightOperandRealType
+    }
+
     const leftOperandAddr = this.safePop(this.operandStack)
-    const { type: leftOperandType } = this.memoryMapper.getTypeOn(leftOperandAddr) as { type: NonVoidType }
-    const { type: rightOperandType } = this.memoryMapper.getTypeOn(rightOperandAddr) as { type: NonVoidType }
-    const resultType = semanticCube[operator][leftOperandType][rightOperandType]
-    if (resultType === 'Type Error') throw new Error('Type Mismatch')
+    let { type: leftOperandType } = this.memoryMapper.getTypeOn(leftOperandAddr) as { type: NonVoidType | 'pointer' }
+    if (leftOperandType === 'pointer') {
+      // get the type of the pointer
+      const leftOperandRealAddr = this.safePop(this.operandStack)
+      const { type: leftOperandRealType } = this.memoryMapper.getTypeOn(leftOperandRealAddr) as {
+        type: NonVoidType | 'pointer'
+      }
+      leftOperandType = leftOperandRealType
+    }
+
+    const resultType = semanticCube[operator][leftOperandType as NonVoidType][rightOperandType as NonVoidType]
+    if (resultType === 'Type Error')
+      throw new Error(
+        `Type mismatch, trying to do operation: ${operator} on ${leftOperandType} and ${rightOperandType}`,
+      )
+
     const quadruple: Instruction = {
       operation: operator,
       lhs: rightOperandAddr,
@@ -306,7 +354,7 @@ class SymbolTable {
   pushLiteral(value: string, type: NonVoidType): void {
     const addr = this.getLiteralAddr(value, type)
     this.operandStack.push(addr)
-    log('Added literal to stack', { value, type })
+    log('Added literal to stack hello', { value, type, addr })
   }
 
   pushOperand(identifier: string): void {
@@ -341,8 +389,10 @@ class SymbolTable {
   }
 
   getLiteralAddr(literal: string, type: NonVoidType): number {
-    if (this.literalTable[literal] === undefined)
+    if (this.literalTable[literal] === undefined) {
+      log(`adding new literal for ${literal}`)
       this.literalTable[literal] = this.memoryMapper.getAddrFor(type, 'constant')
+    }
     return this.literalTable[literal]
   }
 
@@ -594,7 +644,6 @@ class SymbolTable {
 
   handleReturn() {
     const currentFuncType = this.getCurrentFunc().type
-    const funcName = this.currentFunc
     if (currentFuncType === 'void') {
       // Get the temporal from the expression
       this.instructionList.push({
@@ -688,6 +737,8 @@ class SymbolTable {
     }
   }
 
+  // misc
+
   handlePrint() {
     const operatorAddr = this.safePop(this.operandStack)
     this.instructionList.push({
@@ -696,6 +747,103 @@ class SymbolTable {
       rhs: -1,
       result: -1,
     })
+  }
+
+  // arrays
+  prepareArrayAccess(id: string) {
+    // this.safePop(this.operandStack)
+    const varHasDimensions = this.getVarEntry(id)!.dim?.length
+    if (!varHasDimensions) throw new Error(`Tried to index an atomic variable, ${id}`)
+    this.operatorStack.push('(')
+  }
+
+  verifyDimensionMatch(id: string, dimNo: number) {
+    const dimensions = this.getVarEntry(id)!.dim!
+    const indexExprAddr = this.operandStack.peek()!
+    const { type } = this.memoryMapper.getTypeOn(indexExprAddr)
+
+    if (dimNo > dimensions.length - 1) throw new Error('Tried to index more dimensions than declared')
+    if (type !== 'pointer' && type !== 'int') throw new Error('Tried to index an array with a non integer type')
+
+    const dimensionSize = dimensions[dimNo].toString()
+    const quad: Instruction = {
+      operation: 'verify',
+      lhs: indexExprAddr,
+      rhs: -1,
+      result: this.getLiteralAddr(dimensionSize, 'int'),
+    }
+
+    this.instructionList.push(quad)
+    log(quad)
+  }
+
+  checkIfShouldBeIndexed(id: string, dimNo: number) {
+    const dimensions = this.getVarEntry(id)!.dim?.length
+    if (dimensions && dimensions !== dimNo)
+      throw new Error(
+        `Incorrect indexation: variable (${id}) was indexed ${dimNo} times and requires indexing ${dimensions} times  `,
+      )
+  }
+
+  saveOffsetFnResult(id: string) {
+    const { addr: arrayAddr } = this.getVarEntry(id)!
+
+    const accumulatedOffset = this.safePop(this.operandStack)
+    const { type } = this.memoryMapper.getTypeOn(accumulatedOffset)
+    if (type !== 'pointer' && type !== 'int') throw new Error('Tried to index an array with a non integer type')
+
+    const literalizedAddr = this.getLiteralAddr(arrayAddr.toString(), 'int')
+    const offsetResult = this.memoryMapper.getAddrFor('pointer', 'temporal')
+    this.instructionList.push({
+      operation: '+',
+      lhs: accumulatedOffset,
+      rhs: literalizedAddr,
+      result: offsetResult,
+    })
+
+    this.operandStack.push(offsetResult)
+    this.popFakeFloor()
+  }
+
+  maybeCalcOffset(id: string, dimNo: number) {
+    const { dim, kind, addr: arrayAddr } = this.getVarEntry(id)!
+    if (!kind) throw new Error("YOU REAAAAAAAAAALLY should't be getting this error")
+    if (kind === 'array') return
+
+    // s1d2
+    if (dimNo === 0) {
+      const s1 = this.safePop(this.operandStack)
+      const { type } = this.memoryMapper.getTypeOn(s1)
+      if (type !== 'pointer' && type !== 'int') throw new Error('Tried to index an array with a non integer type')
+
+      const s1d2 = this.memoryMapper.getAddrFor('int', 'temporal')
+      const d2 = dim![dimNo + 1]
+      const literalizedDimension = this.getLiteralAddr(d2.toString(), 'int')
+      this.instructionList.push({
+        operation: '*',
+        lhs: s1,
+        rhs: literalizedDimension,
+        result: s1d2,
+      })
+      this.operandStack.push(s1d2)
+      return
+    }
+
+    // the last dimension, just add the previous and the current expression results
+    const s2 = this.safePop(this.operandStack)
+    // verify the last type
+    const { type } = this.memoryMapper.getTypeOn(s2)
+    if (type !== 'int') throw new Error('Tried to index an array with a non integer type')
+
+    const s1d2 = this.safePop(this.operandStack)
+    const indexationAddress = this.memoryMapper.getAddrFor('int', 'temporal')
+    this.instructionList.push({
+      operation: '+',
+      lhs: s1d2,
+      rhs: s2,
+      result: indexationAddress,
+    })
+    this.operandStack.push(indexationAddress)
   }
 }
 

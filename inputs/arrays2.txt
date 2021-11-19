@@ -1,0 +1,11 @@
+page ArrayAssignment
+
+int something[2]
+float somethingElse[2]
+int array[2]
+bool otherArray[5]
+
+void render() {
+  something[2] = array[5] + array[3]
+  something[1] = somethingElse[1]
+}

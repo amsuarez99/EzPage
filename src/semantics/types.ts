@@ -2,7 +2,7 @@ import internal from 'stream'
 
 // General Types
 export type NonVoidType = 'string' | 'float' | 'int' | 'bool'
-export type Type = 'void' | NonVoidType
+export type Type = 'void' | 'pointer' | NonVoidType
 export type TypeError = 'Type Error'
 export type Kind = 'array' | 'matrix' | 'funcReturn'
 export type ScopeSizeEntry = Record<NonVoidType, number>
@@ -33,6 +33,7 @@ export type FuncTable = Record<string, FuncTableEntry>
 // | otherThing | int     | array | 2                         |
 export interface VarTableEntry {
   kind?: Kind
+  dim?: number[]
   addr: number
 }
 export type VarTable = Record<string, VarTableEntry>
@@ -43,12 +44,13 @@ export type Operator = '+' | '-' | '*' | '/' | '<' | '>' | '<=' | '>=' | '==' | 
 // General structure:
 // <type> <operator> <type> = <type>
 export type OperatorRecord = Record<NonVoidType, Record<NonVoidType, NonVoidType | TypeError>>
-export type SemanticCube = Record<Operator, OperatorRecord>
+export type SemanticCube = Record<Partial<Operator>, OperatorRecord>
 
 export type FuncOperation = 'gosub' | 'endfunc' | 'param' | 'era' | 'return'
 export type GotoOperation = 'goto' | 'gotoF' | 'gotoT'
+export type ArrayOperation = 'verify'
 export type ExtraOperation = 'print'
-export type Operation = Operator | GotoOperation | FuncOperation | ExtraOperation
+export type Operation = Operator | GotoOperation | FuncOperation | ArrayOperation | ExtraOperation
 export interface Instruction {
   operation: Operation
   lhs: number

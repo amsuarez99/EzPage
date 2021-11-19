@@ -1,6 +1,5 @@
-import { ScopeSizeEntry } from 'semantics'
+import { ScopeSizeEntry, Type } from 'semantics'
 import { NonVoidType, Scope } from './types'
-
 
 type MemoryRange = Record<string, Record<'min' | 'max' | 'curr', number>>
 
@@ -11,10 +10,17 @@ export default class MemoryMapper {
     this.memoryRanges = {}
   }
 
-  getAddrFor(type: NonVoidType, scope: Scope) {
+  getAddrFor(type: string, scope: Scope) {
     const { max, curr } = this.memoryRanges[scope][type]
     if (curr >= max) throw new Error(`Out of memory for: scope ${scope}, type ${type}`)
     return this.memoryRanges[scope][type].curr++
+  }
+
+  offsetMemory(type: string, scope: Scope, offset: number) {
+    const { max, curr } = this.memoryRanges[scope][type]
+    if (offset === 0) throw new Error(`Must offset memory by an amount`)
+    if (curr + offset >= max) throw new Error(`Out of memory for: scope ${scope}, type ${type}`)
+    this.memoryRanges[scope][type].curr = curr + offset
   }
 
   getMemorySizeFor(scope: Scope) {
@@ -50,7 +56,7 @@ export default class MemoryMapper {
     for (const scope in this.memoryRanges) {
       for (const type in this.memoryRanges[scope]) {
         const { min, max } = this.memoryRanges[scope][type]
-        if (address >= min && address <= max) return { type, scope }
+        if (address >= min && address <= max) return { type, scope } as { type: NonVoidType | 'pointer'; scope: Scope }
       }
     }
 
@@ -66,7 +72,7 @@ export class MemoryBuilder {
     this.reset()
   }
 
-  addMemorySegment(name: string, types: { name: string, size: number }[]) {
+  addMemorySegment(name: string, types: { name: string; size: number }[]) {
     const memoryRanges = types.reduce((accum, type) => {
       if (accum[type.name]) throw new Error('Repeated type found in arguments')
       accum[type.name] = {

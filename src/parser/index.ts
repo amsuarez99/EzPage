@@ -41,18 +41,23 @@ class EzParser extends EmbeddedActionsParser {
       DEF: () => {
         const varName = this.CONSUME(Lexer.Id).image
         let currentKind: Kind | undefined
+        let dimensions: number[] = []
         // Optional indexing
         this.OPTION(() => {
-          this.SUBRULE(this.constantArrayIndexation)
+          const d1 = this.SUBRULE(this.constantArrayIndexation)
           currentKind = 'array'
+          this.ACTION(() => dimensions.push(d1))
         })
 
         this.OPTION1(() => {
-          this.SUBRULE1(this.constantArrayIndexation)
+          const d2 = this.SUBRULE1(this.constantArrayIndexation)
           currentKind = 'matrix'
+          this.ACTION(() => dimensions.push(d2))
         })
 
-        this.ACTION(() => this.symbolTable.addVars({ name: varName, type: currentType, kind: currentKind }))
+        this.ACTION(() =>
+          this.symbolTable.addVars({ name: varName, type: currentType, kind: currentKind, dim: dimensions }),
+        )
 
         // Optional Initialization
         this.OPTION2(() => {
@@ -77,11 +82,13 @@ class EzParser extends EmbeddedActionsParser {
 
   public constantArrayIndexation = this.RULE('constantArrayIndexation', () => {
     this.CONSUME(Lexer.LBracket)
-    this.CONSUME(Lexer.IntLiteral)
+    const index = this.CONSUME(Lexer.IntLiteral).image
     this.CONSUME(Lexer.RBracket)
+    return parseInt(index)
   })
 
   public constantArray = this.RULE('constantArray', () => {
+    // check that the id has dimensions
     this.CONSUME(Lexer.LBracket)
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
@@ -90,6 +97,8 @@ class EzParser extends EmbeddedActionsParser {
       SEP: Lexer.Comma,
     })
     this.CONSUME(Lexer.RBracket)
+    // verify the amount of items in the array
+    // array assignation (we should be given a temporal)
   })
 
   public array = this.RULE('array', () => {
@@ -154,16 +163,22 @@ class EzParser extends EmbeddedActionsParser {
       DEF: () => {
         const varName = this.CONSUME(Lexer.Id).image
         let currentKind: Kind | undefined
+        const dimensions: number[] = []
         this.OPTION(() => {
-          this.SUBRULE(this.arrayIndexation)
+          const d1 = this.SUBRULE(this.constantArrayIndexation)
           currentKind = 'array'
+          dimensions.push(d1)
         })
         this.OPTION1(() => {
-          this.SUBRULE1(this.arrayIndexation)
+          const d2 = this.SUBRULE1(this.constantArrayIndexation)
           currentKind = 'matrix'
+          dimensions.push(d2)
         })
 
-        this.ACTION(() => this.symbolTable.addVars({ name: varName, kind: currentKind, type: currentType }))
+        this.ACTION(() =>
+          this.symbolTable.addVars({ name: varName, kind: currentKind, type: currentType, dim: dimensions }),
+        )
+
         this.OPTION2(() => {
           this.ACTION(() => this.symbolTable.pushOperand(varName))
           const operator = this.CONSUME(Lexer.Equals).image as '='
@@ -230,14 +245,28 @@ class EzParser extends EmbeddedActionsParser {
 
   public variable = this.RULE('variable', () => {
     const id = this.CONSUME(Lexer.Id).image
-    this.OPTION(() => this.SUBRULE(this.arrayIndexation))
-    this.OPTION1(() => this.SUBRULE1(this.arrayIndexation))
-    return id
+    let dimensions = 0
+    this.ACTION(() => this.symbolTable.pushOperand(id))
+    this.OPTION(() => {
+      this.ACTION(() => this.symbolTable.prepareArrayAccess(id))
+      this.SUBRULE(this.arrayIndexation)
+      this.ACTION(() => this.symbolTable.verifyDimensionMatch(id, dimensions))
+      this.ACTION(() => this.symbolTable.maybeCalcOffset(id, dimensions++))
+    })
+    this.OPTION1(() => {
+      this.SUBRULE1(this.arrayIndexation)
+      this.ACTION(() => this.symbolTable.verifyDimensionMatch(id, dimensions))
+      this.ACTION(() => this.symbolTable.maybeCalcOffset(id, dimensions++))
+    })
+
+    this.ACTION(() => this.symbolTable.checkIfShouldBeIndexed(id, dimensions))
+    this.ACTION(() => {
+      if (dimensions) this.symbolTable.saveOffsetFnResult(id)
+    })
   })
 
   public assignment = this.RULE('assignment', () => {
-    const id = this.SUBRULE(this.variable)
-    this.ACTION(() => this.symbolTable.pushOperand(id))
+    this.SUBRULE(this.variable)
     const operator = this.CONSUME(Lexer.Equals).image as '='
     this.ACTION(() => this.symbolTable.pushOperator(operator))
     this.OR([{ ALT: () => this.SUBRULE(this.expression) }, { ALT: () => this.SUBRULE(this.array) }])
@@ -344,8 +373,7 @@ class EzParser extends EmbeddedActionsParser {
       },
       {
         ALT: () => {
-          const id = this.SUBRULE(this.variable)
-          this.ACTION(() => this.symbolTable.pushOperand(id))
+          this.SUBRULE(this.variable)
         },
       },
     ])
