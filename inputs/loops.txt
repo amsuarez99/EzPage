@@ -4,7 +4,7 @@ string hola = "hola"
 int abcd = 12
 int something = 1234
 
-string something(int hola, int hola2) {
+string somethingElse(int hola, int hola2) {
   int mmmmm = abcd / (something + hola)
   int myVar
   while(myVar < 70) {
@@ -13,16 +13,19 @@ string something(int hola, int hola2) {
   for(myVar = 100 to 200) {
     something = something / something
   }
-  return
+  return "hello world"
 }
 
 int secondFunction(int someVar) {
-  return something(someVar, 23)
+  if(somethingElse(someVar, 23) == "hello world") {
+    return 1
+  }
+  return 2
 }
 
 void render() {
   container() {
-    heading(size: 'h1', text: "hello 1")
-    heading(size: 'h2', text: "hello 2")
+    heading(size: "h1", text: "hello 1")
+    heading(size: "h2", text: "hello 2")
   }
 }

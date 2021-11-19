@@ -1,18 +1,18 @@
 page MyFirstMFPage
 
-string hola = 44
+string hola = "something"
 int abcd = 12
 int something = 1234
 
-string something(int hola, int hola2) {
-  const result = abcd / something + hola
+string somethingElse(int hola, int hola2) {
+  int result = abcd / something + hola
   string hello = "hello"
   return hello
 }
 
 void render() {
   container() {
-    heading(size: 'h1', text: "hello 1")
-    heading(size: 'h2', text: "hello 2")
+    heading(size: "h1", text: "hello 1")
+    heading(size: "h2", text: "hello 2")
   }
 }
