@@ -1,5 +1,5 @@
 import { EmbeddedActionsParser } from 'chevrotain'
-import { Kind, NonVoidType, Type, SymbolTable, ContainerArgName } from '../semantics'
+import { Kind, NonVoidType, Type, SymbolTable, Operation } from '../semantics'
 import * as Lexer from '..'
 import { log } from '../logger'
 import MemoryMapper from 'semantics/memoryMapper'
@@ -271,6 +271,7 @@ class EzParser extends EmbeddedActionsParser {
     this.ACTION(() => {
       if (dimensions) this.symbolTable.saveOffsetFnResult(id)
     })
+    return id
   })
 
   public assignment = this.RULE('assignment', () => {
@@ -496,17 +497,19 @@ class EzParser extends EmbeddedActionsParser {
       { ALT: () => this.SUBRULE(this.layout) },
     ])
   })
-
+  // ! ID : 1
   public container = this.RULE('container', () => {
-    const statementName = this.CONSUME(Lexer.Container).image
+    this.CONSUME(Lexer.Container).image as Operation
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(1))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.containerArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
   })
 
+  // ! ID : 1
   public containerArgs = this.RULE('containerArgs', () => {
-    const args: { containerArgName: ContainerArgName, value: any }[] = []
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
         const name = this.OR([
@@ -516,125 +519,282 @@ class EzParser extends EmbeddedActionsParser {
           { ALT: () => this.CONSUME(Lexer.Position) }
         ]).image
         this.CONSUME(Lexer.Colon)
-        const value = this.OR1([{ ALT: () => this.SUBRULE(this.literal).value }, { ALT: () => this.SUBRULE(this.variable) }])
-        this.ACTION(() => { console.log(value) })
+        this.OR1([
+          {
+            ALT: () => {
+              const { value, type } = this.SUBRULE(this.literal)
+              this.ACTION(() => {
+                const v = this.symbolTable.getLiteralAddr(value, type)! as any
+                args.push({ name, v })
+              })
+            }
+          },
+          {
+            ALT: () => {
+              const value = this.SUBRULE(this.variable)
+              this.ACTION(() => {
+                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
+                args.push({ name, v })
+              })
+            }
+          }])
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(1, ...args))
   })
 
+  // ! ID : 2
   public paragraph = this.RULE('paragraph', () => {
     this.CONSUME(Lexer.Paragraph)
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(2))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.paragraphArgs))
     this.CONSUME(Lexer.CParentheses)
   })
 
+  // ! ID : 2
   public paragraphArgs = this.RULE('paragraphArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Text) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Text) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([
+          {
+            ALT: () => {
+              const { value, type } = this.SUBRULE(this.literal)
+              this.ACTION(() => {
+                const v = this.symbolTable.getLiteralAddr(value, type)! as any
+                args.push({ name, v })
+              })
+            }
+          },
+          {
+            ALT: () => {
+              const value = this.SUBRULE(this.variable)
+              this.ACTION(() => {
+                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
+                args.push({ name, v })
+              })
+            }
+          }])
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(2, ...args))
   })
 
+  // ! ID : 3
   public heading = this.RULE('heading', () => {
     this.CONSUME(Lexer.Heading)
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(3))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.headingArgs))
     this.CONSUME(Lexer.CParentheses)
   })
 
+  // ! ID : 3
   public headingArgs = this.RULE('headingArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([
+          {
+            ALT: () => {
+              const { value, type } = this.SUBRULE(this.literal)
+              this.ACTION(() => {
+                const v = this.symbolTable.getLiteralAddr(value, type)! as any
+                args.push({ name, v })
+              })
+            }
+          },
+          {
+            ALT: () => {
+              const value = this.SUBRULE(this.variable)
+              this.ACTION(() => {
+                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
+                args.push({ name, v })
+              })
+            }
+          }])
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(3, ...args))
   })
 
+  // ! ID : 4
   public table = this.RULE('table', () => {
     this.CONSUME(Lexer.Table)
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(4))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.tableArgs))
     this.CONSUME(Lexer.CParentheses)
   })
 
+  // ! ID : 4
   public tableArgs = this.RULE('tableArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Data) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Data) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([
+          {
+            ALT: () => {
+              const { value, type } = this.SUBRULE(this.literal)
+              this.ACTION(() => {
+                const v = this.symbolTable.getLiteralAddr(value, type)! as any
+                args.push({ name, v })
+              })
+            }
+          },
+          {
+            ALT: () => {
+              const value = this.SUBRULE(this.variable)
+              this.ACTION(() => {
+                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
+                args.push({ name, v })
+              })
+            }
+          }])
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(4, ...args))
   })
 
+  // ! ID : 5
   public image = this.RULE('image', () => {
     this.CONSUME(Lexer.Image)
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(5))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.imageArgs))
     this.CONSUME(Lexer.CParentheses)
   })
 
+  // ! ID : 5
   public imageArgs = this.RULE('imageArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Source) }, { ALT: () => this.CONSUME(Lexer.Data) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Source) }, { ALT: () => this.CONSUME(Lexer.Data) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([
+          {
+            ALT: () => {
+              const { value, type } = this.SUBRULE(this.literal)
+              this.ACTION(() => {
+                const v = this.symbolTable.getLiteralAddr(value, type)! as any
+                args.push({ name, v })
+              })
+            }
+          },
+          {
+            ALT: () => {
+              const value = this.SUBRULE(this.variable)
+              this.ACTION(() => {
+                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
+                args.push({ name, v })
+              })
+            }
+          }])
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(5, ...args))
   })
 
+  // ! ID : 6
   public card = this.RULE('card', () => {
     this.CONSUME(Lexer.Card)
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(6))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.cardArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
   })
 
+  // ! ID : 6
   public cardArgs = this.RULE('cardArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Footer) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Footer) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([
+          {
+            ALT: () => {
+              const { value, type } = this.SUBRULE(this.literal)
+              this.ACTION(() => {
+                const v = this.symbolTable.getLiteralAddr(value, type)! as any
+                args.push({ name, v })
+              })
+            }
+          },
+          {
+            ALT: () => {
+              const value = this.SUBRULE(this.variable)
+              this.ACTION(() => {
+                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
+                args.push({ name, v })
+              })
+            }
+          }])
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(6, ...args))
   })
 
+  // ! ID : 7
   public layout = this.RULE('layout', () => {
     this.CONSUME(Lexer.Layout)
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(7))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.layoutArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
   })
 
+  // ! ID : 7
   public layoutArgs = this.RULE('layoutArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([
+        const name = this.OR([
           { ALT: () => this.CONSUME(Lexer.Padding) },
           { ALT: () => this.CONSUME(Lexer.Grid) },
           { ALT: () => this.CONSUME(Lexer.Gap) },
-        ])
+        ]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.OR1([
+          {
+            ALT: () => {
+              const { value, type } = this.SUBRULE(this.literal)
+              this.ACTION(() => {
+                const v = this.symbolTable.getLiteralAddr(value, type)! as any
+                args.push({ name, v })
+              })
+            }
+          },
+          {
+            ALT: () => {
+              const value = this.SUBRULE(this.variable)
+              this.ACTION(() => {
+                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
+                args.push({ name, v })
+              })
+            }
+          }])
+
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(7, ...args))
   })
 }
 

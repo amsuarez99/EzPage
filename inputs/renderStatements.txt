@@ -2,7 +2,17 @@ page RenderTest
 
 void render() {
     int test = 2
-    container(justify: test){
+    string link = "somelink"
+    paragraph(text: "hello world")
+    heading(size: 3, text: "This is very cool")
+    table(data: 1, header: test)
+    container(justify: test, background: 2, width: 3){
+        image(source: link)
         print(2+2)
+    }
+    layout(){
+        card(header: link, footer:"bye"){
+            print("hello")
+        }
     }
 }

@@ -50,7 +50,8 @@ export type FuncOperation = 'gosub' | 'endfunc' | 'param' | 'era' | 'return'
 export type GotoOperation = 'goto' | 'gotoF' | 'gotoT' | 'gotoRender'
 export type ArrayOperation = 'verify'
 export type ExtraOperation = 'print' | 'endprog'
-export type Operation = Operator | GotoOperation | FuncOperation | ArrayOperation | ExtraOperation
+export type RenderOperatrion = 'renderOp'
+export type Operation = Operator | GotoOperation | FuncOperation | ArrayOperation | ExtraOperation | RenderOperatrion
 export interface Instruction {
   operation: Operation
   lhs: number

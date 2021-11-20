@@ -13,7 +13,7 @@ import {
 } from '../semantics'
 import { log } from '../logger'
 import { Stack } from 'mnemonist'
-import { GotoOperation } from './types'
+import { GotoOperation, Operation } from './types'
 import { isNumerical } from './utils'
 import MemoryMapper, { MemoryBuilder } from './memoryMapper'
 
@@ -844,6 +844,25 @@ class SymbolTable {
       result: indexationAddress,
     })
     this.operandStack.push(indexationAddress)
+  }
+
+  handleRenderStatementStart(id: number) {
+    this.instructionList.push({
+      operation: 'renderOp',
+      lhs: id,
+      rhs: -1,
+      result: -1
+    })
+  }
+  handleRenderArgs(id: number, ...args: { name: any, v: any }[]) {
+    args.forEach((arg) => {
+      this.instructionList.push({
+        operation: 'renderOp',
+        lhs: id,
+        rhs: arg.v,
+        result: this.getLiteralAddr(arg.name, 'string')
+      })
+    })
   }
 }
 
