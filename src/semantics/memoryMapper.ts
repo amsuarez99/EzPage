@@ -62,6 +62,11 @@ export default class MemoryMapper {
 
     throw new Error(`Out of memory range for address: ${address}`)
   }
+
+  getContext(address: number) {
+    const { scope, type } = this.getTypeOn(address)
+    return address - this.memoryRanges[scope][type].min
+  }
 }
 
 export class MemoryBuilder {

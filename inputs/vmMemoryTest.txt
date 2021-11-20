@@ -1,0 +1,15 @@
+page VmMemoryTest
+
+int something = 55, something2 = 22
+
+void render() {
+  int ricardo = 10
+  while(ricardo >= 0) {
+    ricardo = ricardo - 1 
+    print(ricardo)
+  }
+
+  for(icardo = 10 to 0 step -1) {
+    print(icardo)
+  }
+}

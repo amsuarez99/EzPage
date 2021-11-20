@@ -2,14 +2,15 @@ import { EmbeddedActionsParser } from 'chevrotain'
 import { Kind, NonVoidType, Type, SymbolTable } from '../semantics'
 import * as Lexer from '..'
 import { log } from '../logger'
+import MemoryMapper from 'semantics/memoryMapper'
 
 class EzParser extends EmbeddedActionsParser {
   pageName!: string
   symbolTable: SymbolTable
 
-  constructor() {
+  constructor(memoryMapper: MemoryMapper) {
     super(Lexer.tokens)
-    this.symbolTable = new SymbolTable()
+    this.symbolTable = new SymbolTable(memoryMapper)
     this.performSelfAnalysis()
   }
 
@@ -18,20 +19,30 @@ class EzParser extends EmbeddedActionsParser {
     // get the name of the page and initialize
     const pageName = this.CONSUME(Lexer.Id).image
     this.ACTION(() => (this.pageName = pageName))
-    this.ACTION(() => this.symbolTable.handleProgramStart())
 
     this.MANY({
-      // Look ahead one token to see if render (our main method) is ahead
       GATE: () => this.LA(1).tokenType !== Lexer.Render,
-      DEF: () => {
-        this.OR([{ ALT: () => this.SUBRULE(this.func) }, { ALT: () => this.SUBRULE(this.globalVariables) }])
-      },
+      DEF: () => this.SUBRULE(this.globalVariables),
     })
+
+    this.ACTION(() => this.symbolTable.handleProgramStart())
+
+    this.MANY1({
+      GATE: () => this.LA(1).tokenType !== Lexer.Render,
+      DEF: () => this.SUBRULE(this.func),
+    })
+
     this.SUBRULE(this.render)
+    this.ACTION(() => this.symbolTable.handleProgramEnd())
     this.symbolTable.instructionList.forEach((instruction, idx) => log(idx, instruction))
     log(this.symbolTable.funcTable)
     log(this.symbolTable.literalTable)
     log(this.symbolTable.memoryMapper.memoryRanges)
+    return {
+      funcTable: this.symbolTable.funcTable,
+      literalTable: this.symbolTable.literalTable,
+      quadruples: this.symbolTable.instructionList,
+    }
   })
 
   // global variables should be different because they have to be declared constantly
@@ -356,7 +367,7 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public atomicExpression = this.RULE('atomicExpression', () => {
-    this.OPTION(() => this.CONSUME(Lexer.Minus))
+    // const foundNegative = this.OPTION(() => !!this.CONSUME(Lexer.Minus).image) ?? false
     this.OR([
       { ALT: () => this.SUBRULE(this.parenthesizedExpression) },
       {

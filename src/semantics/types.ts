@@ -1,11 +1,9 @@
-import internal from 'stream'
-
 // General Types
 export type NonVoidType = 'string' | 'float' | 'int' | 'bool'
 export type Type = 'void' | 'pointer' | NonVoidType
 export type TypeError = 'Type Error'
 export type Kind = 'array' | 'matrix' | 'funcReturn'
-export type ScopeSizeEntry = Record<NonVoidType, number>
+export type ScopeSizeEntry = Record<NonVoidType | 'pointer', number>
 
 // ! Function Directory Types
 // * This is an object so we can index by identifier name
@@ -20,7 +18,7 @@ export interface FuncTableEntry {
   args?: NonVoidType[]
   varsTable?: VarTable
   funcStart?: number
-  size?: Record<'local' | 'temporal', ScopeSizeEntry>
+  size?: Record<'local' | 'temporal', ScopeSizeEntry> | ScopeSizeEntry
 }
 export type FuncTable = Record<string, FuncTableEntry>
 
@@ -49,7 +47,7 @@ export type SemanticCube = Record<Partial<Operator>, OperatorRecord>
 export type FuncOperation = 'gosub' | 'endfunc' | 'param' | 'era' | 'return'
 export type GotoOperation = 'goto' | 'gotoF' | 'gotoT'
 export type ArrayOperation = 'verify'
-export type ExtraOperation = 'print'
+export type ExtraOperation = 'print' | 'endprog'
 export type Operation = Operator | GotoOperation | FuncOperation | ArrayOperation | ExtraOperation
 export interface Instruction {
   operation: Operation
@@ -59,5 +57,10 @@ export interface Instruction {
 }
 
 export type Scope = 'global' | 'local' | 'temporal' | 'constant'
+export interface CompilationOutput {
+  funcTable: FuncTable
+  literalTable: LiteralTable
+  quadruples: Instruction[]
+}
 
 export type LiteralTable = Record<string, number>
