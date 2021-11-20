@@ -30,9 +30,7 @@ class VirtualMachine {
     this.memoryMapper = memoryMapper
     this.compilationOutput = compilationOutput
     this.initExecutionStatus()
-    this.initGlobalMemory()
-    this.initLiteralMemory()
-    this.initDummyMemories()
+    // this.initDummyMemories()
   }
 
   initExecutionStatus() {
@@ -41,6 +39,8 @@ class VirtualMachine {
       instructionPointer: 0,
       contextMemory: {},
     }
+    this.initGlobalMemory()
+    this.initLiteralMemory()
   }
 
   initGlobalMemory() {
@@ -48,19 +48,30 @@ class VirtualMachine {
     this.globalMemory = new Memory(globalMemSizes)
   }
 
-  initDummyMemories() {
-    const renderEntryTemporalSize = (
-      this.compilationOutput.funcTable['render'].size as Record<'temporal' | 'local', ScopeSizeEntry>
-    )?.local
-    if (!renderEntryTemporalSize) throw new Error('blablalca')
-    this.executionStatus.contextMemory.localMemory = new Memory(renderEntryTemporalSize)
-    const renderEntryLocalSize = (
-      this.compilationOutput.funcTable['render'].size as Record<'temporal' | 'local', ScopeSizeEntry>
-    )?.temporal
-    if (!renderEntryLocalSize) throw new Error('blablalca')
-    this.executionStatus.contextMemory.temporalMemory = new Memory(renderEntryTemporalSize)
-    this.executionStatus.funcName = 'global'
+  initLiteralMemory() {
+    const literalMemorySizes = this.memoryMapper.getMemorySizeFor('constant')
+    this.literalMemory = new Memory(literalMemorySizes)
+    Object.entries(this.compilationOutput.literalTable).forEach(([value, addr]) => {
+      const { type } = this.memoryMapper.getTypeOn(addr)
+      if (type === 'int') this.addToMemory(parseInt(value), addr)
+      if (type === 'float') this.addToMemory(parseFloat(value), addr)
+      if (type === 'string') this.addToMemory(value, addr)
+      if (type === 'bool') this.addToMemory(JSON.parse(value), addr)
+    })
   }
+
+  // initDummyMemories() {
+  //   const renderEntryTemporalSize = (
+  //     this.compilationOutput.funcTable['render'].size as Record<'temporal' | 'local', ScopeSizeEntry>
+  //   )?.local
+  //   if (!renderEntryTemporalSize) throw new Error('blablalca')
+  //   this.executionStatus.contextMemory.localMemory = new Memory(renderEntryTemporalSize)
+  //   const renderEntryLocalSize = (
+  //     this.compilationOutput.funcTable['render'].size as Record<'temporal' | 'local', ScopeSizeEntry>
+  //   )?.temporal
+  //   if (!renderEntryLocalSize) throw new Error('blablalca')
+  //   this.executionStatus.contextMemory.temporalMemory = new Memory(renderEntryTemporalSize)
+  // }
 
   incrementInstructionPointer() {
     this.executionStatus.instructionPointer++
@@ -80,9 +91,7 @@ class VirtualMachine {
   }
 
   saveCurrentContext() {
-    console.log('saving context...')
     this.executionStack.push(this.executionStatus)
-    console.dir(this.executionStack, { depth: null })
   }
 
   getInstructionPointer() {
@@ -101,18 +110,6 @@ class VirtualMachine {
     return funcEntry
   }
 
-  initLiteralMemory() {
-    const literalMemorySizes = this.memoryMapper.getMemorySizeFor('constant')
-    this.literalMemory = new Memory(literalMemorySizes)
-    Object.entries(this.compilationOutput.literalTable).forEach(([value, addr]) => {
-      const { type } = this.memoryMapper.getTypeOn(addr)
-      if (type === 'int') this.addToMemory(parseInt(value), addr)
-      if (type === 'float') this.addToMemory(parseFloat(value), addr)
-      if (type === 'string') this.addToMemory(value, addr)
-      if (type === 'bool') this.addToMemory(JSON.parse(value), addr)
-    })
-  }
-
   getNextQuad() {
     return this.compilationOutput.quadruples[this.executionStatus.instructionPointer]
   }
@@ -123,6 +120,8 @@ class VirtualMachine {
       this.processQuadruple()
       this.currentQuad = this.getNextQuad()
     }
+
+    console.log('ending...')
     console.log('global memory')
     console.dir(this.globalMemory, { depth: null })
     console.log('literal memory')
@@ -134,6 +133,7 @@ class VirtualMachine {
   }
 
   processQuadruple() {
+    // console.log('reading quad...', this.currentQuad)
     // let {leftAddr, rightValue, resultAddr} = this.currentQuad
     const leftAddr = this.currentQuad.lhs
     const rightAddr = this.currentQuad.rhs
@@ -251,13 +251,29 @@ class VirtualMachine {
         this.setInstructionPointer(resultAddr)
         break
       }
+      case 'gotoRender': {
+        const { size, funcStart } = this.getFunctionFromFuncTable('render')
+        if (!size || !funcStart)
+          throw new Error('Internal Error: Expected to find function size and start but found nothing')
+        const temporalMemorySizes = (size! as Record<'local' | 'temporal', ScopeSizeEntry>).temporal
+        const localMemorySizes = (size! as Record<'local' | 'temporal', ScopeSizeEntry>).local
+        this.executionStatus = {
+          funcName: 'render',
+          contextMemory: {
+            temporalMemory: new Memory(temporalMemorySizes),
+            localMemory: new Memory(localMemorySizes),
+          },
+          instructionPointer: funcStart,
+        }
+        break
+      }
       case 'gotoF': {
         result = this.getValueFromMemory(leftAddr)
         if (!result) {
           this.setInstructionPointer(resultAddr)
           break
         }
-        this.setInstructionPointer(resultAddr)
+        this.incrementInstructionPointer()
         break
       }
       case 'gotoT': {
@@ -266,7 +282,7 @@ class VirtualMachine {
           this.setInstructionPointer(resultAddr)
           break
         }
-        this.setInstructionPointer(resultAddr)
+        this.incrementInstructionPointer()
         break
       }
       case 'endprog': {
@@ -279,16 +295,29 @@ class VirtualMachine {
         this.incrementInstructionPointer()
         break
       }
+      case 'return': {
+        result = this.getValueFromMemory(resultAddr)
+        const { type } = this.memoryMapper.getTypeOn(resultAddr)
+        const offset = this.memoryMapper.getContext(resultAddr)
+        this.globalMemory.setToMemory(result, type, offset)
+        this.incrementInstructionPointer()
+        break
+      }
+      case 'endfunc': {
+        if (this.executionStack.peek() === undefined)
+          throw new Error('Tried to change context but found nothing in the context stack')
+        this.tempExecutionStatus = this.executionStack.pop()!
+        this.loadTempExecutionStatus()
+        this.incrementInstructionPointer()
+        break
+      }
       case 'era': {
         const funcName = this.getValueFromMemory(leftAddr)
-
         const { size, funcStart } = this.getFunctionFromFuncTable(funcName)
         if (!size || !funcStart)
           throw new Error('Internal Error: Expected to find function size and start but found nothing')
-
         const temporalMemorySizes = (size! as Record<'local' | 'temporal', ScopeSizeEntry>).temporal
         const localMemorySizes = (size! as Record<'local' | 'temporal', ScopeSizeEntry>).local
-
         this.tempExecutionStatus = {
           funcName,
           contextMemory: {
@@ -297,9 +326,6 @@ class VirtualMachine {
           },
           instructionPointer: funcStart,
         }
-
-        console.log('Hello from era!!')
-
         this.incrementInstructionPointer()
         break
       }
@@ -311,30 +337,17 @@ class VirtualMachine {
         const paramType = args![resultAddr]
 
         // copy paramValue from currentContext to tempContext
-        console.log('want to set param', paramValue, paramType, resultAddr)
         this.tempExecutionStatus.contextMemory.localMemory?.setToMemory(paramValue, paramType, resultAddr)
-        console.log('after param set!!')
-        console.dir(this.tempExecutionStatus, { depth: null })
         this.incrementInstructionPointer()
         break
       }
       case 'gosub': {
-        console.log('hello')
         this.saveCurrentContext()
         this.loadTempExecutionStatus()
         break
       }
-      case 'endfunc': {
-        if (this.executionStack.peek() === undefined)
-          throw new Error('Tried to change context but found nothing in the context stack')
-        this.tempExecutionStatus = this.executionStack.pop()!
-        console.log('want to load the saved status!')
-        console.dir(this.tempExecutionStatus, { depth: null })
-        this.loadTempExecutionStatus()
-        this.incrementInstructionPointer()
-        break
-      }
       default: {
+        console.log('catched...', this.currentQuad.operation)
         this.incrementInstructionPointer()
       }
     }
@@ -343,6 +356,7 @@ class VirtualMachine {
   addToMemory(result: any, resultAddr: number) {
     const { type, scope } = this.memoryMapper.getTypeOn(resultAddr)
     const offset = this.memoryMapper.getContext(resultAddr)
+
     if (scope === 'global') return this.globalMemory.setToMemory(result, type, offset)
     if (scope === 'constant') return this.literalMemory.setToMemory(result, type, offset)
     if (scope === 'temporal') return this.getCurrentContext().temporalMemory?.setToMemory(result, type, offset)
@@ -352,6 +366,7 @@ class VirtualMachine {
   getValueFromMemory(addr: number) {
     const { type, scope } = this.memoryMapper.getTypeOn(addr)
     const offset = this.memoryMapper.getContext(addr)
+
     if (scope === 'global') return this.globalMemory.getMemoryFrom(type, offset)
     if (scope === 'constant') return this.literalMemory.getMemoryFrom(type, offset)
     if (scope === 'temporal') return this.getCurrentContext().temporalMemory?.getMemoryFrom(type, offset)

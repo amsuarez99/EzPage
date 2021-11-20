@@ -121,16 +121,452 @@ Added funcEntry: global
     }
   }
 }
-Var Table for global not found... creating varsTable
-Added var __myFunction__ to varsTable of global
-{
-  "dim": [],
-  "addr": 0
-}
 ***Added instruction***
 {
-  "operation": "goto",
+  "operation": "gotoRender",
   "lhs": -1,
   "rhs": -1,
   "result": -1
+}
+changed current func: subtract
+Var Table for subtract not found... creating varsTable
+Added funcEntry: subtract
+{
+  "type": "int",
+  "funcStart": 1
+}
+Added args to func subtract
+[
+  "int",
+  "int"
+]
+Var Table for subtract not found... creating varsTable
+Added var __a__ to varsTable of subtract
+{
+  "addr": 5000
+}
+Added var __b__ to varsTable of subtract
+{
+  "addr": 5001
+}
+pushed to operand stack: [a with addr 5000 of type int]
+pushed to operator stack: -
+pushed to operand stack: [b with addr 5001 of type int]
+pushed __temporal__ to operandStack:
+10000
+***Added instruction***
+{
+  "operation": "-",
+  "lhs": 5000,
+  "rhs": 5001,
+  "result": 10000
+}
+Deleted varsTable for funcEntry: subtract
+changed current func: add
+Added funcEntry: add
+{
+  "type": "int",
+  "funcStart": 4
+}
+Added args to func add
+[
+  "int",
+  "int"
+]
+Var Table for add not found... creating varsTable
+Added var __a__ to varsTable of add
+{
+  "addr": 5000
+}
+Added var __b__ to varsTable of add
+{
+  "addr": 5001
+}
+pushed to operand stack: [a with addr 5000 of type int]
+pushed to operator stack: +
+pushed to operand stack: [b with addr 5001 of type int]
+pushed __temporal__ to operandStack:
+10000
+***Added instruction***
+{
+  "operation": "+",
+  "lhs": 5000,
+  "rhs": 5001,
+  "result": 10000
+}
+Deleted varsTable for funcEntry: add
+changed current func: render
+Added funcEntry: render
+{
+  "type": "void",
+  "funcStart": 7
+}
+adding new literal for subtract
+adding new literal for 1
+Added literal to stack hello
+{
+  "value": "1",
+  "type": "int",
+  "addr": 15000
+}
+adding new literal for 2
+Added literal to stack hello
+{
+  "value": "2",
+  "type": "int",
+  "addr": 15001
+}
+pushed to operand stack: [subtract with addr 0 of type int]
+adding new literal for add
+Added literal to stack hello
+{
+  "value": "1",
+  "type": "int",
+  "addr": 15000
+}
+Added literal to stack hello
+{
+  "value": "2",
+  "type": "int",
+  "addr": 15001
+}
+pushed to operand stack: [add with addr 1 of type int]
+Deleted varsTable for funcEntry: render
+Deleted varsTable for funcEntry: global
+0
+{
+  "operation": "gotoRender",
+  "lhs": -1,
+  "rhs": -1,
+  "result": 7
+}
+1
+{
+  "operation": "-",
+  "lhs": 5000,
+  "rhs": 5001,
+  "result": 10000
+}
+2
+{
+  "operation": "return",
+  "lhs": -1,
+  "rhs": -1,
+  "result": 10000
+}
+3
+{
+  "operation": "endfunc",
+  "lhs": -1,
+  "rhs": -1,
+  "result": -1
+}
+4
+{
+  "operation": "+",
+  "lhs": 5000,
+  "rhs": 5001,
+  "result": 10000
+}
+5
+{
+  "operation": "return",
+  "lhs": -1,
+  "rhs": -1,
+  "result": 10000
+}
+6
+{
+  "operation": "endfunc",
+  "lhs": -1,
+  "rhs": -1,
+  "result": -1
+}
+7
+{
+  "operation": "era",
+  "lhs": 17000,
+  "rhs": -1,
+  "result": -1
+}
+8
+{
+  "operation": "param",
+  "lhs": 15000,
+  "rhs": -1,
+  "result": 0
+}
+9
+{
+  "operation": "param",
+  "lhs": 15001,
+  "rhs": -1,
+  "result": 1
+}
+10
+{
+  "operation": "gosub",
+  "lhs": 17000,
+  "rhs": -1,
+  "result": 1
+}
+11
+{
+  "operation": "=",
+  "lhs": 17000,
+  "rhs": -1,
+  "result": 5000
+}
+12
+{
+  "operation": "print",
+  "lhs": 0,
+  "rhs": -1,
+  "result": -1
+}
+13
+{
+  "operation": "era",
+  "lhs": 17001,
+  "rhs": -1,
+  "result": -1
+}
+14
+{
+  "operation": "param",
+  "lhs": 15000,
+  "rhs": -1,
+  "result": 0
+}
+15
+{
+  "operation": "param",
+  "lhs": 15001,
+  "rhs": -1,
+  "result": 1
+}
+16
+{
+  "operation": "gosub",
+  "lhs": 17001,
+  "rhs": -1,
+  "result": 4
+}
+17
+{
+  "operation": "=",
+  "lhs": 17001,
+  "rhs": -1,
+  "result": 5001
+}
+18
+{
+  "operation": "print",
+  "lhs": 1,
+  "rhs": -1,
+  "result": -1
+}
+19
+{
+  "operation": "endprog",
+  "lhs": -1,
+  "rhs": -1,
+  "result": -1
+}
+{
+  "global": {
+    "type": "void",
+    "funcStart": -1,
+    "size": {
+      "int": 2,
+      "float": 0,
+      "string": 0,
+      "bool": 0,
+      "pointer": 0
+    }
+  },
+  "subtract": {
+    "type": "int",
+    "funcStart": 1,
+    "args": [
+      "int",
+      "int"
+    ],
+    "size": {
+      "local": {
+        "int": 2,
+        "float": 0,
+        "string": 0,
+        "bool": 0,
+        "pointer": 0
+      },
+      "temporal": {
+        "int": 1,
+        "float": 0,
+        "string": 0,
+        "bool": 0,
+        "pointer": 0
+      }
+    }
+  },
+  "add": {
+    "type": "int",
+    "funcStart": 4,
+    "args": [
+      "int",
+      "int"
+    ],
+    "size": {
+      "local": {
+        "int": 2,
+        "float": 0,
+        "string": 0,
+        "bool": 0,
+        "pointer": 0
+      },
+      "temporal": {
+        "int": 1,
+        "float": 0,
+        "string": 0,
+        "bool": 0,
+        "pointer": 0
+      }
+    }
+  },
+  "render": {
+    "type": "void",
+    "funcStart": 7,
+    "size": {
+      "local": {
+        "int": 2,
+        "float": 0,
+        "string": 0,
+        "bool": 0,
+        "pointer": 0
+      },
+      "temporal": {
+        "int": 0,
+        "float": 0,
+        "string": 0,
+        "bool": 0,
+        "pointer": 0
+      }
+    }
+  }
+}
+{
+  "1": 15000,
+  "2": 15001,
+  "subtract": 17000,
+  "add": 17001
+}
+{
+  "global": {
+    "int": {
+      "min": 0,
+      "max": 999,
+      "curr": 0
+    },
+    "float": {
+      "min": 1000,
+      "max": 1999,
+      "curr": 1000
+    },
+    "string": {
+      "min": 2000,
+      "max": 2999,
+      "curr": 2000
+    },
+    "bool": {
+      "min": 3000,
+      "max": 3999,
+      "curr": 3000
+    },
+    "pointer": {
+      "min": 4000,
+      "max": 4999,
+      "curr": 4000
+    }
+  },
+  "local": {
+    "int": {
+      "min": 5000,
+      "max": 5999,
+      "curr": 5000
+    },
+    "float": {
+      "min": 6000,
+      "max": 6999,
+      "curr": 6000
+    },
+    "string": {
+      "min": 7000,
+      "max": 7999,
+      "curr": 7000
+    },
+    "bool": {
+      "min": 8000,
+      "max": 8999,
+      "curr": 8000
+    },
+    "pointer": {
+      "min": 9000,
+      "max": 9999,
+      "curr": 9000
+    }
+  },
+  "temporal": {
+    "int": {
+      "min": 10000,
+      "max": 10999,
+      "curr": 10000
+    },
+    "float": {
+      "min": 11000,
+      "max": 11999,
+      "curr": 11000
+    },
+    "string": {
+      "min": 12000,
+      "max": 12999,
+      "curr": 12000
+    },
+    "bool": {
+      "min": 13000,
+      "max": 13999,
+      "curr": 13000
+    },
+    "pointer": {
+      "min": 14000,
+      "max": 14999,
+      "curr": 14000
+    }
+  },
+  "constant": {
+    "int": {
+      "min": 15000,
+      "max": 15999,
+      "curr": 15002
+    },
+    "float": {
+      "min": 16000,
+      "max": 16999,
+      "curr": 16000
+    },
+    "string": {
+      "min": 17000,
+      "max": 17999,
+      "curr": 17002
+    },
+    "bool": {
+      "min": 18000,
+      "max": 18999,
+      "curr": 18000
+    },
+    "pointer": {
+      "min": 19000,
+      "max": 19999,
+      "curr": 19000
+    }
+  }
 }

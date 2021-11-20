@@ -1,33 +1,5 @@
 import { ScopeSizeEntry, NonVoidType } from '../semantics/types'
 
-//   (temporal)    (local) (global)
-// + 15000,        15001 resultDir
-
-// vm
-// +
-// sum(dir1, dir2, resultDir)
-
-// vmState
-/*
-{
-  global: {
-    int: [undefined, 3, undefined]
-    string: [undefined, "hola", undefined]
-  }
-  constant: {
-    int: [0, 2, 3]
-    string: ["hola", "hola2"]
-  }
-  MEMORIA DE FUNCION
-  local: {
-    "int": [2, 3, 3]
-  }
-  temporal: {
-    "int": [undefined]
-  }
-}
-*/
-
 type IndexType = NonVoidType | 'pointer'
 
 type MemoryIndex = Record<IndexType, any[]>

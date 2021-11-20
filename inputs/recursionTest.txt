@@ -1,0 +1,14 @@
+page recursionTest
+
+int subtract(int a, int b) {
+  return a - b
+}
+
+int add(int a, int b) {
+  return a + b
+}
+
+void render() {
+  print(subtract(1, 2))
+  print(add(1, 2))
+}

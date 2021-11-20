@@ -140,7 +140,7 @@ class SymbolTable {
 
   handleProgramStart() {
     const quad: Instruction = {
-      operation: 'goto',
+      operation: 'gotoRender',
       lhs: -1,
       rhs: -1,
       result: -1,

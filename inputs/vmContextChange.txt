@@ -2,11 +2,19 @@ page ContextChange
 
 int myFunction(int i) {
   print("hello from my function")
-  print(i)
   return i
 }
 
 void render() {
   print("hello from render")
-  print(myFunction(0))
+  int i 
+  for(i = 1 to 10 step 2) {
+    print(myFunction(i))
+  }
+
+  i = 5
+  while(i >= 0) {
+    print(i)
+    i = i - 1
+  }
 }
