@@ -7,7 +7,7 @@ export type TypeError = 'Type Error'
 export type Kind = 'array' | 'matrix' | 'funcReturn'
 export type ScopeSizeEntry = Record<NonVoidType, number>
 
-// ! Variable Directory Types
+// ! Function Directory Types
 // * This is an object so we can index by identifier name
 // Example:
 // | name       | type    | args            | varsTable                 |
