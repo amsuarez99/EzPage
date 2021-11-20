@@ -596,12 +596,14 @@ class SymbolTable {
   handleFuncEnd() {
     // OPTIONAL handle funcTable as a class, to remove complexity from the symbolTable class
     // this.funcTable.deleteVarsTable()
-    this.instructionList.push({
-      operation: 'endfunc',
-      lhs: -1,
-      rhs: -1,
-      result: -1,
-    })
+    if (this.currentFunc !== 'render') {
+      this.instructionList.push({
+        operation: 'endfunc',
+        lhs: -1,
+        rhs: -1,
+        result: -1,
+      })
+    }
 
     this.deleteVarsTable()
     // this.funcTable.calcMemorySize()

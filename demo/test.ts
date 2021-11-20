@@ -46,16 +46,15 @@ function parseInput(text: string) {
   // memory mapper
 
   const compilationOutput = parser.page()
-  console.dir(compilationOutput, { depth: null })
-  const virtualMachine = new VirtualMachine(compilationOutput, memoryMapper)
-
-  virtualMachine.start()
-
   if (parser.errors.length > 0) {
     throw new Error(parser.errors.toString())
   } else {
     console.log('Sucess! No errors!')
   }
+  console.dir(compilationOutput, { depth: null })
+  const virtualMachine = new VirtualMachine(compilationOutput, memoryMapper)
+
+  virtualMachine.start()
 }
 
 try {
