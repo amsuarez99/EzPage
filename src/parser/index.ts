@@ -1,5 +1,5 @@
 import { EmbeddedActionsParser } from 'chevrotain'
-import { Kind, NonVoidType, Type, SymbolTable } from '../semantics'
+import { Kind, NonVoidType, Type, SymbolTable, ContainerArgName } from '../semantics'
 import * as Lexer from '..'
 import { log } from '../logger'
 import MemoryMapper from 'semantics/memoryMapper'
@@ -498,7 +498,7 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public container = this.RULE('container', () => {
-    this.CONSUME(Lexer.Container)
+    const statementName = this.CONSUME(Lexer.Container).image
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.containerArgs))
     this.CONSUME(Lexer.CParentheses)
@@ -506,16 +506,18 @@ class EzParser extends EmbeddedActionsParser {
   })
 
   public containerArgs = this.RULE('containerArgs', () => {
+    const args: { containerArgName: ContainerArgName, value: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([
+        const name = this.OR([
           { ALT: () => this.CONSUME(Lexer.Justify) },
           { ALT: () => this.CONSUME(Lexer.Background) },
           { ALT: () => this.CONSUME(Lexer.Width) },
-          { ALT: () => this.CONSUME(Lexer.Position) },
-        ])
+          { ALT: () => this.CONSUME(Lexer.Position) }
+        ]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        const value = this.OR1([{ ALT: () => this.SUBRULE(this.literal).value }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.ACTION(() => { console.log(value) })
       },
       SEP: Lexer.Comma,
     })
