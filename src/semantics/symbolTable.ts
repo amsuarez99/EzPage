@@ -30,8 +30,9 @@ class SymbolTable {
   memoryMapper: MemoryMapper
   voidHasReturn = false
 
-  constructor() {
+  constructor(memoryMapper: MemoryMapper) {
     this.funcTable = {}
+    this.memoryMapper = memoryMapper
     this.currentFunc = 'global'
     this.handleFuncRegistry('global', 'void')
     this.operatorStack = new Stack()
@@ -39,36 +40,6 @@ class SymbolTable {
     this.jumpStack = new Stack()
     this.instructionList = []
     this.literalTable = {}
-    const memoryBuilder = new MemoryBuilder()
-    memoryBuilder.addMemorySegment('global', [
-      { name: 'int', size: 1000 },
-      { name: 'float', size: 1000 },
-      { name: 'string', size: 1000 },
-      { name: 'bool', size: 1000 },
-      { name: 'pointer', size: 1000 },
-    ])
-    memoryBuilder.addMemorySegment('local', [
-      { name: 'int', size: 1000 },
-      { name: 'float', size: 1000 },
-      { name: 'string', size: 1000 },
-      { name: 'bool', size: 1000 },
-      { name: 'pointer', size: 1000 },
-    ])
-    memoryBuilder.addMemorySegment('temporal', [
-      { name: 'int', size: 1000 },
-      { name: 'float', size: 1000 },
-      { name: 'string', size: 1000 },
-      { name: 'bool', size: 1000 },
-      { name: 'pointer', size: 1000 },
-    ])
-    memoryBuilder.addMemorySegment('constant', [
-      { name: 'int', size: 1000 },
-      { name: 'float', size: 1000 },
-      { name: 'string', size: 1000 },
-      { name: 'bool', size: 1000 },
-      { name: 'pointer', size: 1000 },
-    ])
-    this.memoryMapper = memoryBuilder.getMemory()
   }
 
   getCurrentState() {
@@ -483,7 +454,7 @@ class SymbolTable {
 
     const quad: Instruction = {
       operation: '=',
-      lhs: -1,
+      lhs: exprAddr,
       rhs: -1,
       result: controlAddr,
     }
@@ -513,8 +484,10 @@ class SymbolTable {
     log('***Added instruction***', quadruple)
 
     const { addr: controlAddr } = this.getVarEntry(controlName)!
+    const { type: controlType } = this.memoryMapper.getTypeOn(controlAddr)
 
-    const temp = this.memoryMapper.getAddrFor(exprType, 'temporal')
+    const tempType = semanticCube['<'][controlType as NonVoidType][exprType as NonVoidType]
+    const temp = this.memoryMapper.getAddrFor(tempType, 'temporal')
     const comparisonQuad: Instruction = {
       operation: '<',
       lhs: controlAddr,
@@ -601,6 +574,23 @@ class SymbolTable {
     log('***Added instruction***', jumpQuad)
 
     this.fillPendingJump(falseJump)
+  }
+
+  handleProgramEnd() {
+    this.currentFunc = 'global'
+    this.instructionList.push({
+      operation: 'endprog',
+      lhs: -1,
+      rhs: -1,
+      result: -1,
+    })
+
+    this.deleteVarsTable()
+    const globalMemSize = this.memoryMapper.getMemorySizeFor('global')
+
+    this.memoryMapper.resetAddrFor('global')
+
+    this.getCurrentFunc().size = globalMemSize
   }
 
   handleFuncEnd() {

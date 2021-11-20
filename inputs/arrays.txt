@@ -3,9 +3,16 @@ page Modules
 int something[5][2]
 int somethingElse[42]
 
+int sub(int hola) {
+  hola = hola + 2
+  return hola
+}
+
 void render() {
   print(something[somethingElse[52]][2])
   int hola = 44
+  string hola2 = "hola mundo"
+  string hola3 = "hola mundo 3"
   container() {
     heading(size: "h1", text: "hello 1")
     heading(size: "h2", text: "hello 2")

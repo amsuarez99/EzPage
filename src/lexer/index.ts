@@ -7,8 +7,8 @@ export const Id = createToken({ name: 'Id', pattern: /[a-zA-Z]\w*/ })
 
 // Constants
 // ? Is Char necessary for our language
-export const IntLiteral = createToken({ name: 'IntLiteral', pattern: /\d+/ })
-export const FloatLiteral = createToken({ name: 'FloatLiteral', pattern: /\d+\.\d+/ })
+export const IntLiteral = createToken({ name: 'IntLiteral', pattern: /\-?\d+/ })
+export const FloatLiteral = createToken({ name: 'FloatLiteral', pattern: /\-?\d+\.\d+/ })
 export const StringLiteral = createToken({
   name: 'StringLiteral',
   pattern: /"(:?[^\\"]|\\(:?[bfnrtv"\\/]|u[0-9a-fA-F]{4}))*"/,
