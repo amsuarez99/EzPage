@@ -1,0 +1,14 @@
+page ContextChange
+
+void myFunction() {
+  int i 
+  for(i = 0 to 10 step 2) {
+    print(i + 1)
+  }
+  print("hello from my function")
+}
+
+void render() {
+  print("hello from render")
+  myFunction()
+}

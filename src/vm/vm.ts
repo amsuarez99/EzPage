@@ -42,6 +42,12 @@ class VirtualMachine {
     return globalFuncEntry
   }
 
+  getFunctionFromFuncTable(funcName: string) {
+    const funcEntry = this.compilationOutput.funcTable[funcName]
+    if (!funcEntry) throw new Error(`Weird Error, there was no ${funcName} function defined`)
+    return funcEntry
+  }
+
   initGlobalMemory() {
     const globalMemSizes = this.getGlobalFunction().size as ScopeSizeEntry
     this.globalMemory = new Memory(globalMemSizes)
@@ -230,6 +236,28 @@ class VirtualMachine {
         console.log('Hello from VM!', result)
         this.instructionPointer++
         break
+      }
+      case 'era': {
+        const newFuncName = this.getValueFromMemory(leftAddr)
+
+        const funcEntry = this.getFunctionFromFuncTable(newFuncName)
+        const temporalMemorySizes = (funcEntry.size! as Record<'local' | 'temporal', ScopeSizeEntry>).temporal
+        const localMemorySizes = (funcEntry.size! as Record<'local' | 'temporal', ScopeSizeEntry>).local
+
+        const tempContextMemory: {
+          temporalMemory: Memory
+          localMemory: Memory
+        } = {
+          temporalMemory: new Memory(temporalMemorySizes),
+          localMemory: new Memory(localMemorySizes),
+        }
+        console.log('this is the memory needed to switch contexts')
+        console.dir(tempContextMemory, { depth: null })
+        this.instructionPointer++
+        break
+      }
+      default: {
+        this.instructionPointer++
       }
     }
   }

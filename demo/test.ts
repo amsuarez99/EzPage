@@ -60,7 +60,7 @@ function parseInput(text: string) {
 
 try {
   // read contents of the file
-  const data = fs.readFileSync(path.resolve(__dirname, '../inputs/vmMemoryTest.txt'), { encoding: 'utf-8' })
+  const data = fs.readFileSync(path.resolve(__dirname, '../inputs/vmContextChange.txt'), { encoding: 'utf-8' })
   parseInput(data)
 } catch (err) {
   console.error(err)
