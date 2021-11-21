@@ -375,14 +375,13 @@ class EzParser extends EmbeddedActionsParser {
       },
       {
         ALT: () => {
-          const id = this.SUBRULE(this.funcCall)
-          this.ACTION(() => this.symbolTable.pushOperand(id))
+          this.ACTION(() => this.symbolTable.pushFakeFloor())
+          this.SUBRULE(this.funcCall)
+          this.ACTION(() => this.symbolTable.popFakeFloor())
         },
       },
       {
-        ALT: () => {
-          this.SUBRULE(this.variable)
-        },
+        ALT: () => this.SUBRULE(this.variable),
       },
     ])
   })
@@ -404,7 +403,6 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.CParentheses)
     this.ACTION(() => this.symbolTable.verifySignatureCompletion(funcName, k))
     this.ACTION(() => this.symbolTable.genGosub(funcName))
-    return funcName
   })
 
   public ifStatement = this.RULE('ifStatement', () => {

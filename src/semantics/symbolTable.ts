@@ -325,7 +325,7 @@ class SymbolTable {
   pushLiteral(value: string, type: NonVoidType): void {
     const addr = this.getLiteralAddr(value, type)
     this.operandStack.push(addr)
-    log('Added literal to stack hello', { value, type, addr })
+    log('Added literal to stack', { value, type, addr })
   }
 
   pushOperand(identifier: string): void {
@@ -356,6 +356,7 @@ class SymbolTable {
       throw new Error(`Error in operator stack: Expected ${expectedItem}, but found ${stack.peek()}`)
     if (stack.peek() === undefined) throw new Error('Tried to pop an item in a stack, but found no items')
     const stackItem = stack.pop() as T
+    log('Popping from stack', stackItem)
     return stackItem
   }
 
@@ -723,13 +724,16 @@ class SymbolTable {
 
     if (type !== 'void') {
       // gen another quad to store the function value
+      const temporalResult = this.memoryMapper.getAddrFor(type, 'local')
       const funcReturn: Instruction = {
         operation: '=',
         lhs: this.getVarTable('global')![funcName].addr,
         rhs: -1,
-        result: this.memoryMapper.getAddrFor(type, 'local'),
+        result: temporalResult,
       }
 
+      this.operandStack.push(temporalResult)
+      log(`adding to operand stack, [${temporalResult}, temporal, local`)
       this.instructionList.push(funcReturn)
     }
   }
