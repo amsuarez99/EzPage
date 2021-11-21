@@ -19,17 +19,14 @@ class EzParser extends EmbeddedActionsParser {
     // get the name of the page and initialize
     const pageName = this.CONSUME(Lexer.Id).image
     this.ACTION(() => (this.pageName = pageName))
-
-    this.MANY({
-      GATE: () => this.LA(1).tokenType !== Lexer.Render,
-      DEF: () => this.SUBRULE(this.globalVariables),
-    })
-
     this.ACTION(() => this.symbolTable.handleProgramStart())
 
-    this.MANY1({
+    this.MANY({
+      // Look ahead one token to see if render (our main method) is ahead
       GATE: () => this.LA(1).tokenType !== Lexer.Render,
-      DEF: () => this.SUBRULE(this.func),
+      DEF: () => {
+        this.OR([{ ALT: () => this.SUBRULE(this.func) }, { ALT: () => this.SUBRULE(this.globalVariables) }])
+      },
     })
 
     this.SUBRULE(this.render)
@@ -378,14 +375,13 @@ class EzParser extends EmbeddedActionsParser {
       },
       {
         ALT: () => {
-          const id = this.SUBRULE(this.funcCall)
-          this.ACTION(() => this.symbolTable.pushOperand(id))
+          this.ACTION(() => this.symbolTable.pushFakeFloor())
+          this.SUBRULE(this.funcCall)
+          this.ACTION(() => this.symbolTable.popFakeFloor())
         },
       },
       {
-        ALT: () => {
-          this.SUBRULE(this.variable)
-        },
+        ALT: () => this.SUBRULE(this.variable),
       },
     ])
   })
@@ -407,7 +403,6 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.CParentheses)
     this.ACTION(() => this.symbolTable.verifySignatureCompletion(funcName, k))
     this.ACTION(() => this.symbolTable.genGosub(funcName))
-    return funcName
   })
 
   public ifStatement = this.RULE('ifStatement', () => {
