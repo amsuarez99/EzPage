@@ -311,7 +311,6 @@ class VirtualMachine {
         console.log('setting to global memory', result, funcType, offset)
         this.globalMemory.setToMemory(result, funcType as NonVoidType, offset)
         this.incrementInstructionPointer()
-        break
       }
       case 'endfunc': {
         if (this.executionStack.peek() === undefined)
@@ -324,6 +323,7 @@ class VirtualMachine {
       case 'era': {
         const funcName = this.getValueFromMemory(leftAddr)
         const { size, funcStart } = this.getFunctionFromFuncTable(funcName)
+        console.log(size)
         if (!size || !funcStart)
           throw new Error('Internal Error: Expected to find function size and start but found nothing')
         const temporalMemorySizes = (size! as Record<'local' | 'temporal', ScopeSizeEntry>).temporal

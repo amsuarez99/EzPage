@@ -1,12 +1,8 @@
 page recursionTest
-
-int add(int i) {
-  if(i <= 1) { 
-    return i
-  }
-  return i + add(i - 1)
+int num(int i){
+  return i * 2
 }
-
 void render() {
-  print(add(10))
+  int y = 2 + num(2) * 2
+  print(y)
 }
