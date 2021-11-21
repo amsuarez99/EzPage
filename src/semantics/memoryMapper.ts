@@ -48,9 +48,7 @@ export default class MemoryMapper {
       Record<'min' | 'max' | 'curr', number>,
     ][]
     AddrTypes.forEach(([type, addressMap]) => {
-      console.log('resetting addresses for...', this.memoryRanges[scope][type])
       this.memoryRanges[scope][type].curr = addressMap.min
-      console.log('after reset...', this.memoryRanges[scope][type])
     })
   }
 
