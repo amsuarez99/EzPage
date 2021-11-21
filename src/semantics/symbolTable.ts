@@ -608,7 +608,6 @@ class SymbolTable {
 
     this.deleteVarsTable()
     // this.funcTable.calcMemorySize()
-    console.log('currently ending...', this.currentFunc)
     const localMem = this.memoryMapper.getMemorySizeFor('local')
     const temporalMem = this.memoryMapper.getMemorySizeFor('temporal')
 
