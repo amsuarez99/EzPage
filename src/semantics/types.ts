@@ -19,6 +19,7 @@ export interface FuncTableEntry {
   varsTable?: VarTable
   funcStart?: number
   size?: Record<'local' | 'temporal', ScopeSizeEntry> | ScopeSizeEntry
+  addr?: number
 }
 export type FuncTable = Record<string, FuncTableEntry>
 

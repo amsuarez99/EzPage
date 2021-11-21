@@ -607,6 +607,7 @@ class SymbolTable {
 
     this.deleteVarsTable()
     // this.funcTable.calcMemorySize()
+    console.log('currently ending...', this.currentFunc)
     const localMem = this.memoryMapper.getMemorySizeFor('local')
     const temporalMem = this.memoryMapper.getMemorySizeFor('temporal')
 
@@ -627,11 +628,15 @@ class SymbolTable {
       this.getGlobalFunc().varsTable = {}
       log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
     }
+
+    const funcAddr = this.memoryMapper.getAddrFor(currentType, 'global')
     const varEntry: VarTableEntry = {
       kind: 'funcReturn',
-      addr: this.memoryMapper.getAddrFor(currentType, 'global'),
+      addr: funcAddr,
     }
+    if (!this.getFuncEntry(funcName)) throw new Error("Internal error: cound't find the function")
     this.getVarTable('global')![funcName] = varEntry
+    this.getFuncEntry(funcName)!.addr = funcAddr
   }
 
   handleReturn() {
@@ -720,7 +725,7 @@ class SymbolTable {
       // gen another quad to store the function value
       const funcReturn: Instruction = {
         operation: '=',
-        lhs: mappedFuncName,
+        lhs: this.getVarTable('global')![funcName].addr,
         rhs: -1,
         result: this.memoryMapper.getAddrFor(type, 'local'),
       }

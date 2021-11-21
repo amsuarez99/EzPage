@@ -1,5 +1,5 @@
 import * as quadOperations from './quadOperations'
-import { ScopeSizeEntry, CompilationOutput, Instruction } from '../semantics/types'
+import { ScopeSizeEntry, CompilationOutput, Instruction, NonVoidType } from '../semantics/types'
 import Memory from './memory'
 import MemoryMapper from '../semantics/memoryMapper'
 import { Stack } from 'mnemonist'
@@ -133,7 +133,7 @@ class VirtualMachine {
   }
 
   processQuadruple() {
-    // console.log('reading quad...', this.currentQuad)
+    console.log('reading quad...', this.currentQuad)
     // let {leftAddr, rightValue, resultAddr} = this.currentQuad
     const leftAddr = this.currentQuad.lhs
     const rightAddr = this.currentQuad.rhs
@@ -296,10 +296,20 @@ class VirtualMachine {
         break
       }
       case 'return': {
+        // store in global variables the result
+        // get the global variable offset
+        const funcEntry = this.getFunctionFromFuncTable(this.executionStatus.funcName)
+        if (funcEntry.type === 'void') {
+          this.incrementInstructionPointer()
+          break
+        }
+
         result = this.getValueFromMemory(resultAddr)
-        const { type } = this.memoryMapper.getTypeOn(resultAddr)
-        const offset = this.memoryMapper.getContext(resultAddr)
-        this.globalMemory.setToMemory(result, type, offset)
+
+        const { type: funcType, addr: funcAddr } = funcEntry!
+        const offset = this.memoryMapper.getContext(funcAddr!)
+        console.log('setting to global memory', result, funcType, offset)
+        this.globalMemory.setToMemory(result, funcType as NonVoidType, offset)
         this.incrementInstructionPointer()
         break
       }

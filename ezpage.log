@@ -133,7 +133,8 @@ Var Table for subtract not found... creating varsTable
 Added funcEntry: subtract
 {
   "type": "int",
-  "funcStart": 1
+  "funcStart": 1,
+  "addr": 0
 }
 Added args to func subtract
 [
@@ -166,7 +167,8 @@ changed current func: add
 Added funcEntry: add
 {
   "type": "int",
-  "funcStart": 4
+  "funcStart": 4,
+  "addr": 1
 }
 Added args to func add
 [
@@ -182,16 +184,40 @@ Added var __b__ to varsTable of add
 {
   "addr": 5001
 }
+Added var __firstResult__ to varsTable of add
+{
+  "dim": [],
+  "addr": 5002
+}
+pushed to operand stack: [firstResult with addr 5002 of type int]
+pushed to operator stack: =
+adding new literal for subtract
 pushed to operand stack: [a with addr 5000 of type int]
-pushed to operator stack: +
 pushed to operand stack: [b with addr 5001 of type int]
+pushed to operand stack: [subtract with addr 0 of type int]
+***Added instruction***
+{
+  "operation": "=",
+  "lhs": 0,
+  "rhs": -1,
+  "result": 5002
+}
+pushed to operand stack: [firstResult with addr 5002 of type int]
+pushed to operator stack: +
+adding new literal for 10
+Added literal to stack hello
+{
+  "value": "10",
+  "type": "int",
+  "addr": 15000
+}
 pushed __temporal__ to operandStack:
 10000
 ***Added instruction***
 {
   "operation": "+",
-  "lhs": 5000,
-  "rhs": 5001,
+  "lhs": 5002,
+  "rhs": 15000,
   "result": 10000
 }
 Deleted varsTable for funcEntry: add
@@ -199,36 +225,22 @@ changed current func: render
 Added funcEntry: render
 {
   "type": "void",
-  "funcStart": 7
+  "funcStart": 13
 }
-adding new literal for subtract
+adding new literal for add
 adding new literal for 1
 Added literal to stack hello
 {
   "value": "1",
   "type": "int",
-  "addr": 15000
+  "addr": 15001
 }
 adding new literal for 2
 Added literal to stack hello
 {
   "value": "2",
   "type": "int",
-  "addr": 15001
-}
-pushed to operand stack: [subtract with addr 0 of type int]
-adding new literal for add
-Added literal to stack hello
-{
-  "value": "1",
-  "type": "int",
-  "addr": 15000
-}
-Added literal to stack hello
-{
-  "value": "2",
-  "type": "int",
-  "addr": 15001
+  "addr": 15002
 }
 pushed to operand stack: [add with addr 1 of type int]
 Deleted varsTable for funcEntry: render
@@ -238,7 +250,7 @@ Deleted varsTable for funcEntry: global
   "operation": "gotoRender",
   "lhs": -1,
   "rhs": -1,
-  "result": 7
+  "result": 13
 }
 1
 {
@@ -263,64 +275,64 @@ Deleted varsTable for funcEntry: global
 }
 4
 {
-  "operation": "+",
-  "lhs": 5000,
-  "rhs": 5001,
-  "result": 10000
-}
-5
-{
-  "operation": "return",
-  "lhs": -1,
-  "rhs": -1,
-  "result": 10000
-}
-6
-{
-  "operation": "endfunc",
-  "lhs": -1,
-  "rhs": -1,
-  "result": -1
-}
-7
-{
   "operation": "era",
   "lhs": 17000,
   "rhs": -1,
   "result": -1
 }
-8
+5
 {
   "operation": "param",
-  "lhs": 15000,
+  "lhs": 5000,
   "rhs": -1,
   "result": 0
 }
-9
+6
 {
   "operation": "param",
-  "lhs": 15001,
+  "lhs": 5001,
   "rhs": -1,
   "result": 1
 }
-10
+7
 {
   "operation": "gosub",
   "lhs": 17000,
   "rhs": -1,
   "result": 1
 }
-11
+8
 {
   "operation": "=",
-  "lhs": 17000,
+  "lhs": 0,
   "rhs": -1,
-  "result": 5000
+  "result": 5003
+}
+9
+{
+  "operation": "=",
+  "lhs": 0,
+  "rhs": -1,
+  "result": 5002
+}
+10
+{
+  "operation": "+",
+  "lhs": 5002,
+  "rhs": 15000,
+  "result": 10000
+}
+11
+{
+  "operation": "return",
+  "lhs": -1,
+  "rhs": -1,
+  "result": 10000
 }
 12
 {
-  "operation": "print",
-  "lhs": 0,
+  "operation": "endfunc",
+  "lhs": -1,
   "rhs": -1,
   "result": -1
 }
@@ -334,14 +346,14 @@ Deleted varsTable for funcEntry: global
 14
 {
   "operation": "param",
-  "lhs": 15000,
+  "lhs": 15001,
   "rhs": -1,
   "result": 0
 }
 15
 {
   "operation": "param",
-  "lhs": 15001,
+  "lhs": 15002,
   "rhs": -1,
   "result": 1
 }
@@ -355,9 +367,9 @@ Deleted varsTable for funcEntry: global
 17
 {
   "operation": "=",
-  "lhs": 17001,
+  "lhs": 1,
   "rhs": -1,
-  "result": 5001
+  "result": 5000
 }
 18
 {
@@ -388,6 +400,7 @@ Deleted varsTable for funcEntry: global
   "subtract": {
     "type": "int",
     "funcStart": 1,
+    "addr": 0,
     "args": [
       "int",
       "int"
@@ -412,13 +425,14 @@ Deleted varsTable for funcEntry: global
   "add": {
     "type": "int",
     "funcStart": 4,
+    "addr": 1,
     "args": [
       "int",
       "int"
     ],
     "size": {
       "local": {
-        "int": 2,
+        "int": 4,
         "float": 0,
         "string": 0,
         "bool": 0,
@@ -435,10 +449,10 @@ Deleted varsTable for funcEntry: global
   },
   "render": {
     "type": "void",
-    "funcStart": 7,
+    "funcStart": 13,
     "size": {
       "local": {
-        "int": 2,
+        "int": 1,
         "float": 0,
         "string": 0,
         "bool": 0,
@@ -455,8 +469,9 @@ Deleted varsTable for funcEntry: global
   }
 }
 {
-  "1": 15000,
-  "2": 15001,
+  "1": 15001,
+  "2": 15002,
+  "10": 15000,
   "subtract": 17000,
   "add": 17001
 }
@@ -546,7 +561,7 @@ Deleted varsTable for funcEntry: global
     "int": {
       "min": 15000,
       "max": 15999,
-      "curr": 15002
+      "curr": 15003
     },
     "float": {
       "min": 16000,
