@@ -19,14 +19,14 @@ class VirtualMachine {
   compilationOutput: CompilationOutput
   globalMemory!: Memory
   literalMemory!: Memory
-  executionStatus!: ExecutionStatus
   executionStack: Stack<ExecutionStatus>
-  tempExecutionStatus!: ExecutionStatus
+  pendingContextStack!: Stack<ExecutionStatus>
   memoryMapper: MemoryMapper
   currentQuad!: Instruction
 
   constructor(compilationOutput: CompilationOutput, memoryMapper: MemoryMapper) {
     this.executionStack = new Stack<ExecutionStatus>()
+    this.pendingContextStack = new Stack<ExecutionStatus>()
     this.memoryMapper = memoryMapper
     this.compilationOutput = compilationOutput
     this.initExecutionStatus()
@@ -34,11 +34,12 @@ class VirtualMachine {
   }
 
   initExecutionStatus() {
-    this.executionStatus = {
+    // TODO: define what to do with this context
+    this.executionStack.push({
       funcName: 'global',
       instructionPointer: 0,
       contextMemory: {},
-    }
+    })
     this.initGlobalMemory()
     this.initLiteralMemory()
   }
@@ -73,29 +74,30 @@ class VirtualMachine {
   //   this.executionStatus.contextMemory.temporalMemory = new Memory(renderEntryTemporalSize)
   // }
 
+  getCurrentContext() {
+    if (!this.executionStack.peek()) throw new Error('Internal Error: Trying to access a context but found nothing')
+    return this.executionStack.peek()!
+  }
+
   incrementInstructionPointer() {
-    this.executionStatus.instructionPointer++
+    this.getCurrentContext().instructionPointer++
   }
 
   setInstructionPointer(instructionNo: number) {
-    this.executionStatus.instructionPointer = instructionNo
+    this.getCurrentContext().instructionPointer = instructionNo
   }
 
-  loadTempExecutionStatus() {
-    this.executionStatus = this.tempExecutionStatus
-  }
+  // loadTempExecutionStatus() {
+  //   this.executionStatus = this.tempExecutionStatus
+  // }
 
-  getCurrentContext() {
-    if (!this.executionStatus.contextMemory) throw new Error('Tried to get a current Context but no context was found')
-    return this.executionStatus.contextMemory
-  }
 
-  saveCurrentContext() {
-    this.executionStack.push(this.executionStatus)
-  }
+  // saveCurrentContext() {
+  //   this.executionStack.push(this.executionStatus)
+  // }
 
   getInstructionPointer() {
-    return this.executionStatus.instructionPointer
+    return this.getCurrentContext().instructionPointer
   }
 
   getGlobalFunction() {
@@ -111,7 +113,8 @@ class VirtualMachine {
   }
 
   getNextQuad() {
-    return this.compilationOutput.quadruples[this.executionStatus.instructionPointer]
+    const instructionNo = this.getCurrentContext().instructionPointer
+    return this.compilationOutput.quadruples[instructionNo]
   }
 
   start() {
@@ -127,9 +130,9 @@ class VirtualMachine {
     console.log('literal memory')
     console.dir(this.literalMemory, { depth: null })
     console.log('temporal memory')
-    console.dir(this.getCurrentContext().temporalMemory, { depth: null })
+    console.dir(this.getCurrentContext().contextMemory.temporalMemory, { depth: null })
     console.log('local memory')
-    console.dir(this.getCurrentContext().localMemory, { depth: null })
+    console.dir(this.getCurrentContext().contextMemory.localMemory, { depth: null })
   }
 
   processQuadruple() {
@@ -257,14 +260,14 @@ class VirtualMachine {
           throw new Error('Internal Error: Expected to find function size and start but found nothing')
         const temporalMemorySizes = (size! as Record<'local' | 'temporal', ScopeSizeEntry>).temporal
         const localMemorySizes = (size! as Record<'local' | 'temporal', ScopeSizeEntry>).local
-        this.executionStatus = {
+        this.executionStack.push({
           funcName: 'render',
           contextMemory: {
             temporalMemory: new Memory(temporalMemorySizes),
             localMemory: new Memory(localMemorySizes),
           },
           instructionPointer: funcStart,
-        }
+        })
         break
       }
       case 'gotoF': {
@@ -298,7 +301,7 @@ class VirtualMachine {
       case 'return': {
         // store in global variables the result
         // get the global variable offset
-        const funcEntry = this.getFunctionFromFuncTable(this.executionStatus.funcName)
+        const funcEntry = this.getFunctionFromFuncTable(this.executionStack.peek()?.funcName!)
         if (funcEntry.type === 'void') {
           this.incrementInstructionPointer()
           break
@@ -310,13 +313,13 @@ class VirtualMachine {
         const offset = this.memoryMapper.getContext(funcAddr!)
         console.log('setting to global memory', result, funcType, offset)
         this.globalMemory.setToMemory(result, funcType as NonVoidType, offset)
-        this.incrementInstructionPointer()
+        // this.incrementInstructionPointer()
       }
       case 'endfunc': {
         if (this.executionStack.peek() === undefined)
           throw new Error('Tried to change context but found nothing in the context stack')
-        this.tempExecutionStatus = this.executionStack.pop()!
-        this.loadTempExecutionStatus()
+        this.executionStack.pop()!
+        // this.loadTempExecutionStatus()
         this.incrementInstructionPointer()
         break
       }
@@ -328,32 +331,36 @@ class VirtualMachine {
           throw new Error('Internal Error: Expected to find function size and start but found nothing')
         const temporalMemorySizes = (size! as Record<'local' | 'temporal', ScopeSizeEntry>).temporal
         const localMemorySizes = (size! as Record<'local' | 'temporal', ScopeSizeEntry>).local
-        this.tempExecutionStatus = {
+        this.pendingContextStack.push({
           funcName,
           contextMemory: {
             temporalMemory: new Memory(temporalMemorySizes),
             localMemory: new Memory(localMemorySizes),
           },
           instructionPointer: funcStart,
-        }
+        })
         this.incrementInstructionPointer()
         break
       }
       case 'param': {
-        const targetFunc = this.tempExecutionStatus.funcName
+        const targetFunc = this.pendingContextStack.peek()!.funcName
 
         const paramValue = this.getValueFromMemory(leftAddr)
         const { args } = this.getFunctionFromFuncTable(targetFunc)
         const paramType = args![resultAddr]
 
         // copy paramValue from currentContext to tempContext
-        this.tempExecutionStatus.contextMemory.localMemory?.setToMemory(paramValue, paramType, resultAddr)
+        const temp = this.pendingContextStack.pop()!
+        temp.contextMemory.localMemory?.setToMemory(paramValue, paramType, resultAddr)
+        this.pendingContextStack.push(temp)
         this.incrementInstructionPointer()
         break
       }
       case 'gosub': {
-        this.saveCurrentContext()
-        this.loadTempExecutionStatus()
+        if (!this.pendingContextStack.peek()) throw new Error('Internal Error: Trying to change contexts, but found nothing in the pending context stack')
+        this.executionStack.push(this.pendingContextStack.pop()!)
+        // this.saveCurrentContext()
+        // this.loadTempExecutionStatus()
         break
       }
       default: {
@@ -369,8 +376,8 @@ class VirtualMachine {
 
     if (scope === 'global') return this.globalMemory.setToMemory(result, type, offset)
     if (scope === 'constant') return this.literalMemory.setToMemory(result, type, offset)
-    if (scope === 'temporal') return this.getCurrentContext().temporalMemory?.setToMemory(result, type, offset)
-    if (scope === 'local') return this.getCurrentContext().localMemory?.setToMemory(result, type, offset)
+    if (scope === 'temporal') return this.getCurrentContext().contextMemory.temporalMemory?.setToMemory(result, type, offset)
+    if (scope === 'local') return this.getCurrentContext().contextMemory.localMemory?.setToMemory(result, type, offset)
   }
 
   getValueFromMemory(addr: number) {
@@ -379,8 +386,8 @@ class VirtualMachine {
 
     if (scope === 'global') return this.globalMemory.getMemoryFrom(type, offset)
     if (scope === 'constant') return this.literalMemory.getMemoryFrom(type, offset)
-    if (scope === 'temporal') return this.getCurrentContext().temporalMemory?.getMemoryFrom(type, offset)
-    if (scope === 'local') return this.getCurrentContext().localMemory?.getMemoryFrom(type, offset)
+    if (scope === 'temporal') return this.getCurrentContext().contextMemory.temporalMemory?.getMemoryFrom(type, offset)
+    if (scope === 'local') return this.getCurrentContext().contextMemory.localMemory?.getMemoryFrom(type, offset)
   }
 }
 

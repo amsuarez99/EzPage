@@ -128,108 +128,170 @@ Added funcEntry: global
   "rhs": -1,
   "result": -1
 }
-changed current func: num
-Var Table for num not found... creating varsTable
-Added funcEntry: num
+changed current func: fib
+Var Table for fib not found... creating varsTable
+Added funcEntry: fib
 {
   "type": "int",
   "funcStart": 1,
   "addr": 0
 }
-Added args to func num
+Added args to func fib
 [
   "int"
 ]
-Var Table for num not found... creating varsTable
-Added var __i__ to varsTable of num
+Var Table for fib not found... creating varsTable
+Added var __n__ to varsTable of fib
 {
   "addr": 5000
 }
 pushed fake floor
-pushed to operand stack: [i with addr 5000 of type int]
-pushed to operator stack: *
-adding new literal for 2
-Added literal to stack hello
+pushed to operand stack: [n with addr 5000 of type int]
+pushed to operator stack: <=
+adding new literal for 1
+Added literal to stack
 {
-  "value": "2",
+  "value": "1",
   "type": "int",
   "addr": 15000
 }
+Popping from stack
+<=
+Popping from stack
+15000
+Popping from stack
+5000
+pushed __temporal__ to operandStack:
+13000
+***Added instruction***
+{
+  "operation": "<=",
+  "lhs": 5000,
+  "rhs": 15000,
+  "result": 13000
+}
+Popping from stack
+(
+Popped fake floor
+Popping from stack
+13000
+***Added instruction***
+{
+  "operation": "gotoF",
+  "lhs": 13000,
+  "rhs": -1,
+  "result": -1
+}
+pushed to operand stack: [n with addr 5000 of type int]
+Popping from stack
+5000
+Popping from stack
+2
+pushed fake floor
+adding new literal for fib
+pushed to operand stack: [n with addr 5000 of type int]
+pushed to operator stack: -
+Added literal to stack
+{
+  "value": "1",
+  "type": "int",
+  "addr": 15000
+}
+Popping from stack
+-
+Popping from stack
+15000
+Popping from stack
+5000
 pushed __temporal__ to operandStack:
 10000
 ***Added instruction***
 {
-  "operation": "*",
+  "operation": "-",
   "lhs": 5000,
   "rhs": 15000,
   "result": 10000
 }
-Popped fake floor
-Deleted varsTable for funcEntry: num
-changed current func: render
-Added funcEntry: render
-{
-  "type": "void",
-  "funcStart": 4
-}
-Var Table for render not found... creating varsTable
-Added var __y__ to varsTable of render
-{
-  "dim": [],
-  "addr": 5000
-}
-pushed to operand stack: [y with addr 5000 of type int]
-pushed to operator stack: =
-pushed fake floor
-Added literal to stack hello
-{
-  "value": "2",
-  "type": "int",
-  "addr": 15000
-}
-pushed to operator stack: +
-adding new literal for num
-Added literal to stack hello
-{
-  "value": "2",
-  "type": "int",
-  "addr": 15000
-}
-pushed __temporal__ to operandStack:
+Popping from stack
 10000
-***Added instruction***
-{
-  "operation": "+",
-  "lhs": 15000,
-  "rhs": 15000,
-  "result": 10000
-}
-pushed to operand stack: [num with addr 0 of type int]
-pushed to operator stack: *
-Added literal to stack hello
+adding to operand stack, [5001, temporal, local
+Popping from stack
+(
+Popped fake floor
+pushed to operator stack: +
+pushed fake floor
+pushed to operand stack: [n with addr 5000 of type int]
+pushed to operator stack: -
+adding new literal for 2
+Added literal to stack
 {
   "value": "2",
   "type": "int",
-  "addr": 15000
+  "addr": 15001
 }
+Popping from stack
+-
+Popping from stack
+15001
+Popping from stack
+5000
 pushed __temporal__ to operandStack:
 10001
 ***Added instruction***
 {
-  "operation": "*",
-  "lhs": 0,
-  "rhs": 15000,
+  "operation": "-",
+  "lhs": 5000,
+  "rhs": 15001,
   "result": 10001
 }
+Popping from stack
+10001
+adding to operand stack, [5002, temporal, local
+Popping from stack
+(
 Popped fake floor
+Popping from stack
++
+Popping from stack
+5002
+Popping from stack
+5001
+pushed __temporal__ to operandStack:
+10002
 ***Added instruction***
 {
-  "operation": "=",
-  "lhs": 10001,
-  "rhs": -1,
-  "result": 5000
+  "operation": "+",
+  "lhs": 5001,
+  "rhs": 5002,
+  "result": 10002
 }
-pushed to operand stack: [y with addr 5000 of type int]
+Popping from stack
+10002
+Deleted varsTable for funcEntry: fib
+changed current func: render
+Added funcEntry: render
+{
+  "type": "void",
+  "funcStart": 17
+}
+Popping from stack
+0
+pushed fake floor
+adding new literal for 10
+Added literal to stack
+{
+  "value": "10",
+  "type": "int",
+  "addr": 15002
+}
+Popping from stack
+15002
+adding to operand stack, [5000, temporal, local
+Popping from stack
+(
+Popped fake floor
+Popping from stack
+5000
 Deleted varsTable for funcEntry: render
 Deleted varsTable for funcEntry: global
 0
@@ -237,28 +299,28 @@ Deleted varsTable for funcEntry: global
   "operation": "gotoRender",
   "lhs": -1,
   "rhs": -1,
-  "result": 4
+  "result": 17
 }
 1
 {
-  "operation": "*",
+  "operation": "<=",
   "lhs": 5000,
   "rhs": 15000,
-  "result": 10000
+  "result": 13000
 }
 2
+{
+  "operation": "gotoF",
+  "lhs": 13000,
+  "rhs": -1,
+  "result": 4
+}
+3
 {
   "operation": "return",
   "lhs": -1,
   "rhs": -1,
-  "result": 10000
-}
-3
-{
-  "operation": "endfunc",
-  "lhs": -1,
-  "rhs": -1,
-  "result": -1
+  "result": 5000
 }
 4
 {
@@ -269,8 +331,8 @@ Deleted varsTable for funcEntry: global
 }
 5
 {
-  "operation": "+",
-  "lhs": 15000,
+  "operation": "-",
+  "lhs": 5000,
   "rhs": 15000,
   "result": 10000
 }
@@ -297,26 +359,96 @@ Deleted varsTable for funcEntry: global
 }
 9
 {
-  "operation": "*",
-  "lhs": 0,
-  "rhs": 15000,
-  "result": 10001
+  "operation": "era",
+  "lhs": 17000,
+  "rhs": -1,
+  "result": -1
 }
 10
 {
-  "operation": "=",
+  "operation": "-",
+  "lhs": 5000,
+  "rhs": 15001,
+  "result": 10001
+}
+11
+{
+  "operation": "param",
   "lhs": 10001,
+  "rhs": -1,
+  "result": 0
+}
+12
+{
+  "operation": "gosub",
+  "lhs": 17000,
+  "rhs": -1,
+  "result": 1
+}
+13
+{
+  "operation": "=",
+  "lhs": 0,
+  "rhs": -1,
+  "result": 5002
+}
+14
+{
+  "operation": "+",
+  "lhs": 5001,
+  "rhs": 5002,
+  "result": 10002
+}
+15
+{
+  "operation": "return",
+  "lhs": -1,
+  "rhs": -1,
+  "result": 10002
+}
+16
+{
+  "operation": "endfunc",
+  "lhs": -1,
+  "rhs": -1,
+  "result": -1
+}
+17
+{
+  "operation": "era",
+  "lhs": 17000,
+  "rhs": -1,
+  "result": -1
+}
+18
+{
+  "operation": "param",
+  "lhs": 15002,
+  "rhs": -1,
+  "result": 0
+}
+19
+{
+  "operation": "gosub",
+  "lhs": 17000,
+  "rhs": -1,
+  "result": 1
+}
+20
+{
+  "operation": "=",
+  "lhs": 0,
   "rhs": -1,
   "result": 5000
 }
-11
+21
 {
   "operation": "print",
   "lhs": 5000,
   "rhs": -1,
   "result": -1
 }
-12
+22
 {
   "operation": "endprog",
   "lhs": -1,
@@ -335,7 +467,7 @@ Deleted varsTable for funcEntry: global
       "pointer": 0
     }
   },
-  "num": {
+  "fib": {
     "type": "int",
     "funcStart": 1,
     "addr": 0,
@@ -344,34 +476,34 @@ Deleted varsTable for funcEntry: global
     ],
     "size": {
       "local": {
-        "int": 1,
+        "int": 3,
         "float": 0,
         "string": 0,
         "bool": 0,
         "pointer": 0
       },
       "temporal": {
-        "int": 1,
+        "int": 3,
         "float": 0,
         "string": 0,
-        "bool": 0,
+        "bool": 1,
         "pointer": 0
       }
     }
   },
   "render": {
     "type": "void",
-    "funcStart": 4,
+    "funcStart": 17,
     "size": {
       "local": {
-        "int": 2,
+        "int": 1,
         "float": 0,
         "string": 0,
         "bool": 0,
         "pointer": 0
       },
       "temporal": {
-        "int": 2,
+        "int": 0,
         "float": 0,
         "string": 0,
         "bool": 0,
@@ -381,8 +513,10 @@ Deleted varsTable for funcEntry: global
   }
 }
 {
-  "2": 15000,
-  "num": 17000
+  "1": 15000,
+  "2": 15001,
+  "10": 15002,
+  "fib": 17000
 }
 {
   "global": {
@@ -470,7 +604,7 @@ Deleted varsTable for funcEntry: global
     "int": {
       "min": 15000,
       "max": 15999,
-      "curr": 15001
+      "curr": 15003
     },
     "float": {
       "min": 16000,
