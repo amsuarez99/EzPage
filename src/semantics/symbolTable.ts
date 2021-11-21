@@ -140,7 +140,7 @@ class SymbolTable {
 
   handleProgramStart() {
     const quad: Instruction = {
-      operation: 'goto',
+      operation: 'gotoRender',
       lhs: -1,
       rhs: -1,
       result: -1,
@@ -325,7 +325,7 @@ class SymbolTable {
   pushLiteral(value: string, type: NonVoidType): void {
     const addr = this.getLiteralAddr(value, type)
     this.operandStack.push(addr)
-    log('Added literal to stack hello', { value, type, addr })
+    log('Added literal to stack', { value, type, addr })
   }
 
   pushOperand(identifier: string): void {
@@ -356,6 +356,7 @@ class SymbolTable {
       throw new Error(`Error in operator stack: Expected ${expectedItem}, but found ${stack.peek()}`)
     if (stack.peek() === undefined) throw new Error('Tried to pop an item in a stack, but found no items')
     const stackItem = stack.pop() as T
+    log('Popping from stack', stackItem)
     return stackItem
   }
 
@@ -596,12 +597,14 @@ class SymbolTable {
   handleFuncEnd() {
     // OPTIONAL handle funcTable as a class, to remove complexity from the symbolTable class
     // this.funcTable.deleteVarsTable()
-    this.instructionList.push({
-      operation: 'endfunc',
-      lhs: -1,
-      rhs: -1,
-      result: -1,
-    })
+    if (this.currentFunc !== 'render') {
+      this.instructionList.push({
+        operation: 'endfunc',
+        lhs: -1,
+        rhs: -1,
+        result: -1,
+      })
+    }
 
     this.deleteVarsTable()
     // this.funcTable.calcMemorySize()
@@ -625,11 +628,15 @@ class SymbolTable {
       this.getGlobalFunc().varsTable = {}
       log(`Var Table for ${this.currentFunc} not found... creating varsTable`)
     }
+
+    const funcAddr = this.memoryMapper.getAddrFor(currentType, 'global')
     const varEntry: VarTableEntry = {
       kind: 'funcReturn',
-      addr: this.memoryMapper.getAddrFor(currentType, 'global'),
+      addr: funcAddr,
     }
+    if (!this.getFuncEntry(funcName)) throw new Error("Internal error: cound't find the function")
     this.getVarTable('global')![funcName] = varEntry
+    this.getFuncEntry(funcName)!.addr = funcAddr
   }
 
   handleReturn() {
@@ -716,13 +723,16 @@ class SymbolTable {
 
     if (type !== 'void') {
       // gen another quad to store the function value
+      const temporalResult = this.memoryMapper.getAddrFor(type, 'local')
       const funcReturn: Instruction = {
         operation: '=',
-        lhs: mappedFuncName,
+        lhs: this.getVarTable('global')![funcName].addr,
         rhs: -1,
-        result: this.memoryMapper.getAddrFor(type, 'local'),
+        result: temporalResult,
       }
 
+      this.operandStack.push(temporalResult)
+      log(`adding to operand stack, [${temporalResult}, temporal, local`)
       this.instructionList.push(funcReturn)
     }
   }

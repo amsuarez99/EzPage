@@ -42,26 +42,21 @@ function parseInput(text: string) {
   // "input" is a setter which will reset the parser's state.
 
   parser.input = lexingResult.tokens
-
+  const compilationOutput = parser.page()
+  if (parser.errors.length > 0) throw new Error(parser.errors.toString())
   // memory mapper
 
-  const compilationOutput = parser.page()
   console.dir(compilationOutput, { depth: null })
   const virtualMachine = new VirtualMachine(compilationOutput, memoryMapper)
 
   virtualMachine.start()
-
-  if (parser.errors.length > 0) {
-    throw new Error(parser.errors.toString())
-  } else {
-    console.log('Sucess! No errors!')
-  }
 }
 
 try {
   // read contents of the file
-  const data = fs.readFileSync(path.resolve(__dirname, '../inputs/vmMemoryTest.txt'), { encoding: 'utf-8' })
+  const data = fs.readFileSync(path.resolve(__dirname, '../inputs/fib.txt'), { encoding: 'utf-8' })
   parseInput(data)
+  console.log('Sucess! No errors!')
 } catch (err) {
   console.error(err)
 }
