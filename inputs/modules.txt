@@ -5,7 +5,7 @@ string something(int hola, int hola2) {
   if(myBoolean == false) {
     return "hola"
   }
-  string myString = "hello world"
+  string myString = "hello wold"
   int myInt = 61
   float myFloat = 56.55
   hola = 2
@@ -13,13 +13,15 @@ string something(int hola, int hola2) {
 }
 
 int secondFunction(int someVar) {
-  string something = something(someVar, 23)
-  int myInt = 23
-  return myInt
+  if(something(someVar, 23) == "hello world") {
+    return 1
+  }
+  return 2
 }
 
 void render() {
   int hola = 44
+  print(secondFunction(hola))
   container() {
     heading(size: "h1", text: "hello 1")
     heading(size: "h2", text: "hello 2")

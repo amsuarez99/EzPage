@@ -754,7 +754,7 @@ class SymbolTable {
     // this.safePop(this.operandStack)
     const varHasDimensions = this.getVarEntry(id)!.dim?.length
     if (!varHasDimensions) throw new Error(`Tried to index an atomic variable, ${id}`)
-    this.operatorStack.push('(')
+    this.pushFakeFloor()
   }
 
   verifyDimensionMatch(id: string, dimNo: number) {
