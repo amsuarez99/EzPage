@@ -445,7 +445,7 @@ class EzParser extends EmbeddedActionsParser {
     }) as number | undefined
     this.ACTION(() => this.symbolTable.handleControlCompare(id))
     this.CONSUME(Lexer.CParentheses)
-    this.SUBRULE(this.block)
+    this.SUBRULE(this.renderBlock)
     this.ACTION(() => this.symbolTable.handleForEnd(id, stepDir))
   })
 
@@ -599,29 +599,29 @@ class EzParser extends EmbeddedActionsParser {
       DEF: () => {
         const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }]).image
         this.CONSUME(Lexer.Colon)
-        // this.SUBRULE(this.expression)
-        // const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
-        // args.push({ name, v:exprAddr })
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
 
-        this.OR1([
-          {
-            ALT: () => {
-              const { value, type } = this.SUBRULE(this.literal)
-              this.ACTION(() => {
-                const v = this.symbolTable.getLiteralAddr(value, type)! as any
-                args.push({ name, v })
-              })
-            }
-          },
-          {
-            ALT: () => {
-              const value = this.SUBRULE(this.variable)
-              this.ACTION(() => {
-                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
-                args.push({ name, v })
-              })
-            }
-          }])
+        // this.OR1([
+        //   {
+        //     ALT: () => {
+        //       const { value, type } = this.SUBRULE(this.literal)
+        //       this.ACTION(() => {
+        //         const v = this.symbolTable.getLiteralAddr(value, type)! as any
+        //         args.push({ name, v })
+        //       })
+        //     }
+        //   },
+        //   {
+        //     ALT: () => {
+        //       const value = this.SUBRULE(this.variable)
+        //       this.ACTION(() => {
+        //         const v = this.symbolTable.getVarEntry(value, true)!.addr as any
+        //         args.push({ name, v })
+        //       })
+        //     }
+        //   }])
       },
       SEP: Lexer.Comma,
     })

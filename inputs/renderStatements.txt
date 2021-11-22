@@ -30,7 +30,11 @@ string getCoolTitle(int num) {
 
 void render() {
     int arrays[5]
-    int iterator = 1
+    int iterator
+    for(iterator = 0 to 6 step 1) {
+        arrays[iterator] = iterator + 1
+        heading(text: getCoolTitle(iterator + 1), size: arrays[iterator])
+    }
     string link = "somelink"
     paragraph(text: "hello world")
     paragraph(text: link)
