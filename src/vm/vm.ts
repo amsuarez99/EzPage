@@ -101,7 +101,7 @@ class VirtualMachine {
       this.processQuadruple()
       this.currentQuad = this.getNextQuad()
     }
-
+    quadOperations.doRenderLog()
     console.log('ending...')
     console.log('global memory')
     console.dir(this.globalMemory, { depth: null })
@@ -267,6 +267,7 @@ class VirtualMachine {
         break
       }
       case 'endprog': {
+        quadOperations.doRenderLog()
         this.incrementInstructionPointer()
         break
       }
@@ -344,6 +345,18 @@ class VirtualMachine {
         this.incrementInstructionPointer()
         break
       }
+      case 'renderOp': {
+        // -- TAG id
+        const leftValue = this.checkRenderAddr(leftAddr)
+        // VALUE
+        const rightValue = this.checkRenderAddr(rightAddr)
+        // parameter
+        const result = this.checkRenderAddr(resultAddr)
+        console.log(leftValue, rightValue, result, resultAddr)
+        quadOperations.buildRenderStruct(leftAddr, rightValue, result)
+        this.incrementInstructionPointer()
+        break
+      }
       default: {
         console.log('catched...', this.currentQuad.operation)
         this.incrementInstructionPointer()
@@ -352,6 +365,14 @@ class VirtualMachine {
   }
 
   // addrAccess indicates if it should access the address inside the cell (*14000(5000) in assignment only) or just (overwrite 14000 default)
+  checkRenderAddr(addr: any){
+    if(addr > 0){
+      return this.getValueFromMemory(addr)
+    }else{
+      return -1
+    }
+  }
+
   addToMemory(result: any, resultAddr: number, addrAccess = false) {
     const { type, scope } = this.memoryMapper.getTypeOn(resultAddr)
     const offset = this.memoryMapper.getContext(resultAddr)

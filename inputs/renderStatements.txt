@@ -1,18 +1,14 @@
 page RenderTest
 
 void render() {
-    int test = 2
     string link = "somelink"
+    string kirby = "https://www.smashbros.com/images/og/kirby.jpg"
+    heading(size: 1, text: "This is an h1")
+    heading(text: "test", size: 2)
+    heading(text: "smaller", size: 3)
+    heading(text: "hello there", size: 4)
+    heading(text: "This will be an image", size: 5)
+    image(source: kirby)
     paragraph(text: "hello world")
-    heading(size: 3, text: "This is very cool")
-    table(data: 1, header: test)
-    container(justify: test, background: 2, width: 3){
-        image(source: link)
-        print(2+2)
-    }
-    layout(){
-        card(header: link, footer:"bye"){
-            print("hello")
-        }
-    }
+    paragraph(text: link)
 }

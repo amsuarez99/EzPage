@@ -547,7 +547,6 @@ class EzParser extends EmbeddedActionsParser {
   // ! ID : 2
   public paragraph = this.RULE('paragraph', () => {
     this.CONSUME(Lexer.Paragraph)
-    this.ACTION(() => this.symbolTable.handleRenderStatementStart(2))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.paragraphArgs))
     this.CONSUME(Lexer.CParentheses)
@@ -588,7 +587,6 @@ class EzParser extends EmbeddedActionsParser {
   // ! ID : 3
   public heading = this.RULE('heading', () => {
     this.CONSUME(Lexer.Heading)
-    this.ACTION(() => this.symbolTable.handleRenderStatementStart(3))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.headingArgs))
     this.CONSUME(Lexer.CParentheses)
@@ -670,7 +668,6 @@ class EzParser extends EmbeddedActionsParser {
   // ! ID : 5
   public image = this.RULE('image', () => {
     this.CONSUME(Lexer.Image)
-    this.ACTION(() => this.symbolTable.handleRenderStatementStart(5))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.imageArgs))
     this.CONSUME(Lexer.CParentheses)

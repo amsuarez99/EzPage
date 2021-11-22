@@ -1,3 +1,6 @@
+import { write } from "fs"
+import {writeLog} from "../renderLogger"
+
 export const sum = (lhs: number, rhs: number) => {
   return lhs + rhs
 }
@@ -49,4 +52,110 @@ export const andExp = (lhs: boolean, rhs: boolean) => {
 
 export const orExp = (lhs: boolean, rhs: boolean) => {
   return lhs || rhs
+}
+
+type Tag = {
+  name?: string,
+  config?: any
+  props?: {
+    children: any
+  }
+  className?: any,
+  dom?: any,
+  text?: any
+}
+let tags: [Tag] = [{}]
+tags.shift()
+let currentTag: Tag = {}
+let temporalTag: Tag = {}
+const setCurrentTag = (current: Tag) => {
+  currentTag = current
+}
+const getRealHeadingTag = (tag: any) => {
+  switch (tag) {
+    case 1:
+      return 'h1'
+    case 2:
+      return 'h2'
+    case 3:
+      return 'h3'
+    case 4:
+      return 'h4'
+    case 5:
+      return 'h5'
+    case 6:
+      return 'h6'
+    default:
+      return 'h1'
+  }
+}
+
+export const doRenderLog = () => {
+  writeLog(tags)
+}
+
+export const buildRenderStruct = (tag: number, args: any, something: any) => {
+  console.log(tag, args, something)
+  args = JSON.parse(args)
+  switch (tag) {
+    case 1:
+      console.log("container")
+      break;
+    case 2:
+      console.log("paragraph")
+      tags.push({
+        name: 'p',
+        text: args,
+        config: {}
+      })
+      break;
+    case 3:
+      console.log("heading")
+      if(something === "text"){
+        const n = { ...temporalTag,
+          text: args,
+          config: {}
+        }
+        temporalTag = n
+      }else{
+        const realTag = getRealHeadingTag(args)
+        const n = { ...temporalTag,
+          name: realTag,
+          config: {}
+        }
+        temporalTag = n
+      }
+      if(temporalTag.name && temporalTag.text){
+        tags.push(temporalTag)
+        temporalTag = {}
+      }
+      break;
+    case 4:
+      console.log("table")
+      break;
+    case 5:
+      console.log("image")
+      if(something === "source"){
+        tags.push({
+          name: 'img',
+          config: {
+            style: {
+              src: args,
+            },
+          },
+          text: ''
+        })
+      } 
+      break;
+    case 6:
+      console.log("card")
+      break;
+    case 7:
+      console.log("layout")
+      break;
+  
+    default:
+      break;
+  }
+  
 }
