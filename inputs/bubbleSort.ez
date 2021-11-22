@@ -1,0 +1,41 @@
+page sorting
+
+int array[10]
+
+void fillArray(int arrSize) {
+  int iterator
+  for(iterator = 0 to arrSize)  {
+    array[iterator] = arrSize - iterator
+  }
+}
+
+void arrayPrint(int arrSize) {
+  int iterator
+  for(iterator = 0 to arrSize)  {
+    print(array[iterator], "\n")
+  }
+}
+
+void swap(int a, int b) {
+  int temp = array[a]
+  array[a] = array[b]
+  array[b] = temp
+}
+ 
+void bubbleSort(int arrSize) {
+    int i, j
+    for (i = 0 to arrSize - 1) {
+      for(j = 0 to arrSize - i - 1) {
+        if(array[j] > array[j + 1]) {
+          swap(j, j + 1) 
+        }
+      }
+    }
+}
+
+void render() {
+  int arraySize = 10
+  fillArray(arraySize)
+  bubbleSort(arraySize)
+  arrayPrint(arraySize)
+}

@@ -1,0 +1,26 @@
+page fibonacci
+
+int fib(int n){
+    if(n <= 1){
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+int ciclicFib(int count) {
+    int iterator, num1 = 0, num2 = 1;
+    int prevTwo
+
+    for (iterator = 1 to count) {
+        prevTwo = num1 + num2
+        num1 = num2
+        num2 = prevTwo
+    }
+
+    return prevTwo
+}   
+
+void render(){
+    print(fib(7))
+    print(ciclicFib(7))
+}

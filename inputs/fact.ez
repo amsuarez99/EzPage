@@ -1,0 +1,21 @@
+page fact
+
+int fact(int n) {
+  if (n == 0) {
+    return 1
+  }
+  return n * fact(n - 1); 
+}
+
+int factLoop(int n) {
+  int res = 1, i
+  for (i = 2 to n + 1 step 1) {
+    res = res * i
+  }
+  return res;
+}
+
+void render() {
+  print(fact(5))
+  print(factLoop(5))
+}

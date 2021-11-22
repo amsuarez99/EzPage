@@ -1,0 +1,22 @@
+page flowControl
+
+int i
+int j
+
+void something() {
+  if(i < j) {
+    print("hello world")
+  } else {
+    print("something else")
+  }
+
+  print("end of function")
+}
+
+void render() {
+
+  i = 9
+  j = 10
+  
+  something()
+}
