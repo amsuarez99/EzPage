@@ -58,9 +58,7 @@ export const orExp = (lhs: boolean, rhs: boolean) => {
 type Tag = {
   name?: string,
   config?: any
-  props?: {
-    children: any
-  }
+  props?: any
   children?: any
   className?: any,
   dom?: any,
@@ -104,6 +102,7 @@ export const addCurrentArgs = (params: any) => {
 
 let mainStack: Stack<any>
 let currentStack: Stack<any>
+let hasParent: boolean = false
 
 export const buildRenderStruct = (tag: number, args: any, something: any) => {
   args = JSON.parse(args)
@@ -111,7 +110,9 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
     case 1:
       console.log("container")
       console.log(args, something)
+      hasParent = true
       if(args === -2 && something === -2){
+        hasParent = false
         console.log("WE ARE OUT >>>>>>")
         tags.push(currentTag)
         currentTag = {}
@@ -119,7 +120,11 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
       if(args === -1 && something == -1){
           currentTag = {
           name: 'div',
-          className: 'container'
+          config: {
+            className: 'container',
+          },
+          text: "",
+          children: []
         }
         setCurrentTag(currentTag)
       }else{
@@ -129,11 +134,21 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
       break;
     case 2:
       console.log("paragraph")
-      tags.push({
-        name: 'p',
+      const child = {
+        tag: 'p',
         text: args,
-        config: {}
-      })
+        config: {
+          style: {},
+          className: 'hello',
+        },
+        children: []
+      }
+      
+      if(hasParent){
+        currentTag.children.push(child)
+      }else{
+        tags.push(child)
+      }
       break;
     case 3:
       console.log("heading")
@@ -158,7 +173,11 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
         temporalTag = n
       }
       if(temporalTag.name && temporalTag.text){
-        tags.push(temporalTag)
+        if(hasParent){
+          currentTag.children.push(temporalTag)
+        }else{
+          tags.push(temporalTag)
+        }
         temporalTag = {}
       }
       break;
@@ -173,7 +192,7 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
           config: {
             className: 'image is-128x128'
           },
-          children: {
+          children: [{
               tag: 'img',
               config: {
                 style : {
@@ -181,7 +200,7 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
                 },
                 props: {}
               }
-            },
+            }],
           text: ''
         })
       } 

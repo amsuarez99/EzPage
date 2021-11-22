@@ -369,7 +369,7 @@ class VirtualMachine {
     if(addr > 0){
       return this.getValueFromMemory(addr)
     }else{
-      return -1
+      return addr
     }
   }
 

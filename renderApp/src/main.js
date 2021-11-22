@@ -40,6 +40,7 @@ function mountVText(vText, parentDOMNode) {
 
 function mountVElement(vElement, parentDOMNode) {
   const { className, tag, props, style } = vElement;
+  console.log(parentDOMNode)
 
   const domNode = document.createElement(tag);
   vElement.dom = domNode;
@@ -76,7 +77,10 @@ const myApp = createVElement('div', { className: 'my-class' },
   data.map((element) => {
     console.log(element)
     if(element.children){
-      return createVElement(element.name, element.config, [element.children])
+      return createVElement(element.name, element.config, element.children.map((child) => {
+        console.log(child)
+        return createVElement(child.name, child.config, [child.text])
+      }))
     }else{
       return createVElement(element.name, element.config, [element.text])
     }
