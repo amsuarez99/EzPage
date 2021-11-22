@@ -1,0 +1,48 @@
+page find
+float mat[10][15]
+
+void initMatrix() {
+  int rows = 10
+  int columns = 15
+  int i, j
+  for(i = 0 to rows) {
+    for(j = 0 to columns) {
+      mat[i][j] = (i * columns + j) * 1.1
+    }
+  }
+}
+
+void matrixPrint() {
+  int rows = 10
+  int columns = 15
+  int i, j
+  for(i = 0 to rows) {
+    for(j = 0 to columns) {
+      print(mat[i][j], " ")
+    }
+    print("\n")
+  }
+}
+
+void find(float item) {
+  int rows = 10
+  int columns = 15
+  int i, j
+  for(i = 0 to rows) {
+    for(j = 0 to columns) {
+      if(mat[i][j] == item) {
+        print(item, " found at position: (", i, ",", j, ")\n")
+        return
+      }
+    }
+  }
+  print("item not found :(\n")
+}
+
+void render() {
+  float item = -1.99
+  initMatrix()
+  mat[7][8] = -1.99
+  find(item)
+  matrixPrint()
+}

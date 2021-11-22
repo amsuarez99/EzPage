@@ -3,6 +3,7 @@ import { ScopeSizeEntry, CompilationOutput, Instruction, NonVoidType } from '../
 import Memory from './memory'
 import MemoryMapper from '../semantics/memoryMapper'
 import { Stack } from 'mnemonist'
+import process from 'process'
 
 type ContextMemory = {
   temporalMemory?: Memory
@@ -272,7 +273,9 @@ class VirtualMachine {
       }
       case 'print': {
         result = this.getValueFromMemory(leftAddr)
-        console.log('>', JSON.parse(result))
+        if (typeof result === 'string') {
+          process.stdout.write(JSON.parse(result))
+        } else process.stdout.write(result.toString())
         this.incrementInstructionPointer()
         break
       }

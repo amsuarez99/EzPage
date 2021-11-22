@@ -1,0 +1,86 @@
+page matMult
+int a[5][5]
+float b[5][5]
+int product[5][5]
+
+void fillMatrixA(int arrSize) {
+  int i, j
+  for(i = 0 to arrSize)  {
+    for(j = 0 to arrSize) {
+      a[i][j] = i * arrSize + j
+    }
+  }
+}
+
+void fillMatrixB(int arrSize) {
+  int i, j
+  for(i = 0 to arrSize)  {
+    for(j = 0 to arrSize) {
+      b[i][j] = i*arrSize + j
+    }
+  }
+}
+
+void fillProductMat(int arrSize) {
+  int i, j
+    for(i = 0 to arrSize) {
+        for(j = 0 to arrSize) {
+          product[i][j] = 0;
+        }
+    }
+}
+
+void productMatrixPrint(int arrSize) {
+  int i, j
+  for(i=0 to arrSize) {
+      for(j=0 to arrSize) {
+        print(product[i][j], " ")
+      }
+      print("\n")
+  } 
+}
+
+void matrixMult() {
+  int r1 = 5, c1= 5, r2=5, c2=5
+  int i, j, k
+  int arrSizes = 5
+  fillMatrixA(arrSizes)
+  fillMatrixB(arrSizes)
+  fillProductMat(arrSizes)
+
+  if (c1 != r2) {
+    print("Column of first matrix should be equal to row of second matrix\n")
+   } 
+   else {
+     print("The first matrix is:\n")
+      for(i=0 to r1) {
+         for(j=0 to c1) {
+           print(a[i][j], " ")
+         }
+        print("\n")
+      }
+      print("\n")
+      print("The second matrix is:\n")
+      for(i=0 to r2) {
+         for(j=0 to c2) {
+           print(b[i][j], " ")
+         }
+        print("\n")
+      }
+      for(i=0 to r1) {
+        for(j=0 to c2) {
+            for(k=0 to c1) {
+              product[i][j] = product[i][j] + a[i][k] * b[k][j]
+            }
+        }
+      }
+
+     print("\nProduct of the two matrices is:\n")
+     productMatrixPrint(arrSizes)
+   }
+}
+
+void render() {
+  matrixMult()
+}
+
