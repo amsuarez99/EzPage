@@ -60,6 +60,7 @@ type Tag = {
   props?: {
     children: any
   }
+  children?: any
   className?: any,
   dom?: any,
   text?: any
@@ -100,6 +101,15 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
   switch (tag) {
     case 1:
       console.log("container")
+      console.log(args, something)
+      if(args === -1 && something == -1){
+          currentTag = {
+          name: 'div',
+          className: 'container'
+        }
+        setCurrentTag(currentTag)
+      }
+      
       break;
     case 2:
       console.log("paragraph")
@@ -111,17 +121,23 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
       break;
     case 3:
       console.log("heading")
+      const cn = "title is-"+args
+      console.log(cn)
       if(something === "text"){
         const n = { ...temporalTag,
           text: args,
-          config: {}
+          config: {
+            className: cn
+          },
         }
         temporalTag = n
       }else{
         const realTag = getRealHeadingTag(args)
         const n = { ...temporalTag,
           name: realTag,
-          config: {}
+          config: {
+            className: cn
+          },
         }
         temporalTag = n
       }
@@ -137,12 +153,19 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
       console.log("image")
       if(something === "source"){
         tags.push({
-          name: 'img',
+          name: 'figure',
           config: {
-            style: {
-              src: args,
-            },
+            className: 'image is-128x128'
           },
+          children: {
+              tag: 'img',
+              config: {
+                style : {
+                  src: args
+                },
+                props: {}
+              }
+            },
           text: ''
         })
       } 

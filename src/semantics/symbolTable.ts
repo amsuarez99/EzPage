@@ -854,6 +854,11 @@ class SymbolTable {
       result: -1
     })
   }
+
+  handleRenderArg() {
+    return this.safePop(this.operandStack)
+  }
+
   handleRenderArgs(id: number, ...args: { name: any, v: any }[]) {
     args.forEach((arg) => {
       this.instructionList.push({

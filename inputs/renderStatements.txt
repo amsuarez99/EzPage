@@ -1,14 +1,37 @@
 page RenderTest
 
-void render() {
-    string link = "somelink"
+
+string getKirby(){
     string kirby = "https://www.smashbros.com/images/og/kirby.jpg"
-    heading(size: 1, text: "This is an h1")
-    heading(text: "test", size: 2)
-    heading(text: "smaller", size: 3)
-    heading(text: "hello there", size: 4)
-    heading(text: "This will be an image", size: 5)
-    image(source: kirby)
+    return kirby
+}
+
+string getCoolTitle(int num) {
+    if(num == 1){
+        return "This is H1"
+    }
+    if(num == 2){
+        return "This is H2"
+    }
+    if(num == 3){
+        return "This is H3"
+    }
+    if(num == 4){
+        return "This is H4"
+    }
+    if(num == 5){
+        return "This is H5"
+    }
+    if(num == 6){
+        return "This is H6"
+    }
+    return "this is not a very cool title"
+}
+
+void render() {
+    int arrays[5]
+    int iterator = 1
+    string link = "somelink"
     paragraph(text: "hello world")
     paragraph(text: link)
 }

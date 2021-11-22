@@ -1,3 +1,4 @@
+import { verify } from "crypto";
 import j from "../../input.json"
 
 const data = j
@@ -42,10 +43,15 @@ function mountVElement(vElement, parentDOMNode) {
 
   const domNode = document.createElement(tag);
   vElement.dom = domNode;
-  if (props.children) {
-     // Oeh, we have children. Pass it back to our mount
+  console.log(vElement)
+  if(props){
+
+    if (props.children) {
+       // Oeh, we have children. Pass it back to our mount
      // function and let it determine what type it is.
-     props.children.forEach(child => mount(child, domNode));
+       console.log(props.children)
+       props.children.forEach(child => mount(child, domNode));
+    }
   }
 
   if (className !== undefined) {
@@ -57,7 +63,7 @@ function mountVElement(vElement, parentDOMNode) {
   }
   console.log(vElement)
   if(vElement.tag === "img"){
-    vElement.dom.src = vElement.style.src
+    vElement.dom.src = vElement.config.style.src
     vElement.dom.width = 200
     vElement.dom.height = 200
   }
@@ -71,7 +77,11 @@ const root = document.body
 const myApp = createVElement('div', { className: 'my-class' }, 
   data.map((element) => {
     console.log(element)
+    if(element.children){
+      return createVElement(element.name, element.config, [element.children])
+    }else{
       return createVElement(element.name, element.config, [element.text])
+    }
   })
 );
 mountVElement(myApp, root)

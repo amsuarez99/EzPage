@@ -599,6 +599,10 @@ class EzParser extends EmbeddedActionsParser {
       DEF: () => {
         const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }]).image
         this.CONSUME(Lexer.Colon)
+        // this.SUBRULE(this.expression)
+        // const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        // args.push({ name, v:exprAddr })
+
         this.OR1([
           {
             ALT: () => {
