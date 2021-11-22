@@ -1,7 +1,14 @@
 page Modules
 
-int something[5][2]
-int somethingElse[42]
+int something[10][10]
+
+int accessIndex(int i) {
+  int myThing = something[i][i]
+  print(something[0][0])
+  print(something[1][9])
+  print("trying to access", i)
+  return myThing
+}
 
 int sub(int hola) {
   hola = hola + 2
@@ -9,10 +16,24 @@ int sub(int hola) {
 }
 
 void render() {
-  print(something[somethingElse[52]][2])
-  int hola = 44
-  string hola2 = "hola mundo"
-  string hola3 = "hola mundo 3"
+  int i
+  int j
+  int counter = 0
+  for(i = 0 to 10 step 1) {
+    for(j = 0 to 10 step 1) {
+      something[i][j] = counter
+      counter = counter + 1
+    }
+  }
+
+  for(i = 0 to 10 step 1) {
+    for(j = 0 to 10 step 1) {
+      print(something[i][j])
+    }
+  }
+
+  print(accessIndex(3))
+
   container() {
     heading(size: "h1", text: "hello 1")
     heading(size: "h2", text: "hello 2")

@@ -54,7 +54,7 @@ function parseInput(text: string) {
 
 try {
   // read contents of the file
-  const data = fs.readFileSync(path.resolve(__dirname, '../inputs/fib.txt'), { encoding: 'utf-8' })
+  const data = fs.readFileSync(path.resolve(__dirname, '../inputs/arrays.txt'), { encoding: 'utf-8' })
   parseInput(data)
   console.log('Sucess! No errors!')
 } catch (err) {
