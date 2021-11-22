@@ -855,6 +855,15 @@ class SymbolTable {
     })
   }
 
+  handleRenderStatementEnd(id: number) {
+    this.instructionList.push({
+      operation: 'renderOp',
+      lhs: id,
+      rhs: -2,
+      result: -2
+    })
+  }
+
   handleRenderArg() {
     return this.safePop(this.operandStack)
   }

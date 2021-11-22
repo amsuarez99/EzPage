@@ -1,4 +1,5 @@
 import { write } from "fs"
+import { Stack } from "mnemonist"
 import {writeLog} from "../renderLogger"
 
 export const sum = (lhs: number, rhs: number) => {
@@ -63,7 +64,8 @@ type Tag = {
   children?: any
   className?: any,
   dom?: any,
-  text?: any
+  text?: any,
+  style?: any
 }
 let tags: [Tag] = [{}]
 tags.shift()
@@ -95,21 +97,35 @@ export const doRenderLog = () => {
   writeLog(tags)
 }
 
+export const addCurrentArgs = (params: any) => {
+  currentTag = {...currentTag,style: {...currentTag.style,...params}
+  }
+}
+
+let mainStack: Stack<any>
+let currentStack: Stack<any>
+
 export const buildRenderStruct = (tag: number, args: any, something: any) => {
-  console.log(tag, args, something)
   args = JSON.parse(args)
   switch (tag) {
     case 1:
       console.log("container")
       console.log(args, something)
+      if(args === -2 && something === -2){
+        console.log("WE ARE OUT >>>>>>")
+        tags.push(currentTag)
+        currentTag = {}
+      }
       if(args === -1 && something == -1){
           currentTag = {
           name: 'div',
           className: 'container'
         }
         setCurrentTag(currentTag)
+      }else{
+        addCurrentArgs({[something]: args})
       }
-      
+      console.log(currentTag)
       break;
     case 2:
       console.log("paragraph")

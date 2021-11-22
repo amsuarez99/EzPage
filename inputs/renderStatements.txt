@@ -31,7 +31,7 @@ string getCoolTitle(int num) {
 void render() {
     int arrays[5]
     int iterator
-    for(iterator = 0 to 6 step 1) {
+    for(iterator = 0 to 5 step 1) {
         arrays[iterator] = iterator + 1
         heading(text: getCoolTitle(iterator + 1), size: arrays[iterator])
     }

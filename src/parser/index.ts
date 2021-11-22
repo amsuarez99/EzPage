@@ -505,39 +505,24 @@ class EzParser extends EmbeddedActionsParser {
     this.OPTION(() => this.SUBRULE(this.containerArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
+    this.ACTION(() => {this.symbolTable.handleRenderStatementEnd(1)})
   })
 
   // ! ID : 1
+  // ! width fluid, max, default
+  // ! background : color
   public containerArgs = this.RULE('containerArgs', () => {
     const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
         const name = this.OR([
-          { ALT: () => this.CONSUME(Lexer.Justify) },
           { ALT: () => this.CONSUME(Lexer.Background) },
           { ALT: () => this.CONSUME(Lexer.Width) },
-          { ALT: () => this.CONSUME(Lexer.Position) }
         ]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([
-          {
-            ALT: () => {
-              const { value, type } = this.SUBRULE(this.literal)
-              this.ACTION(() => {
-                const v = this.symbolTable.getLiteralAddr(value, type)! as any
-                args.push({ name, v })
-              })
-            }
-          },
-          {
-            ALT: () => {
-              const value = this.SUBRULE(this.variable)
-              this.ACTION(() => {
-                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
-                args.push({ name, v })
-              })
-            }
-          }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
@@ -559,25 +544,9 @@ class EzParser extends EmbeddedActionsParser {
       DEF: () => {
         const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Text) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([
-          {
-            ALT: () => {
-              const { value, type } = this.SUBRULE(this.literal)
-              this.ACTION(() => {
-                const v = this.symbolTable.getLiteralAddr(value, type)! as any
-                args.push({ name, v })
-              })
-            }
-          },
-          {
-            ALT: () => {
-              const value = this.SUBRULE(this.variable)
-              this.ACTION(() => {
-                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
-                args.push({ name, v })
-              })
-            }
-          }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
@@ -602,26 +571,6 @@ class EzParser extends EmbeddedActionsParser {
         this.SUBRULE(this.expression)
         const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
         args.push({ name, v:exprAddr })
-
-        // this.OR1([
-        //   {
-        //     ALT: () => {
-        //       const { value, type } = this.SUBRULE(this.literal)
-        //       this.ACTION(() => {
-        //         const v = this.symbolTable.getLiteralAddr(value, type)! as any
-        //         args.push({ name, v })
-        //       })
-        //     }
-        //   },
-        //   {
-        //     ALT: () => {
-        //       const value = this.SUBRULE(this.variable)
-        //       this.ACTION(() => {
-        //         const v = this.symbolTable.getVarEntry(value, true)!.addr as any
-        //         args.push({ name, v })
-        //       })
-        //     }
-        //   }])
       },
       SEP: Lexer.Comma,
     })
@@ -644,25 +593,9 @@ class EzParser extends EmbeddedActionsParser {
       DEF: () => {
         const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Data) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([
-          {
-            ALT: () => {
-              const { value, type } = this.SUBRULE(this.literal)
-              this.ACTION(() => {
-                const v = this.symbolTable.getLiteralAddr(value, type)! as any
-                args.push({ name, v })
-              })
-            }
-          },
-          {
-            ALT: () => {
-              const value = this.SUBRULE(this.variable)
-              this.ACTION(() => {
-                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
-                args.push({ name, v })
-              })
-            }
-          }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
@@ -684,25 +617,9 @@ class EzParser extends EmbeddedActionsParser {
       DEF: () => {
         const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Source) }, { ALT: () => this.CONSUME(Lexer.Data) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([
-          {
-            ALT: () => {
-              const { value, type } = this.SUBRULE(this.literal)
-              this.ACTION(() => {
-                const v = this.symbolTable.getLiteralAddr(value, type)! as any
-                args.push({ name, v })
-              })
-            }
-          },
-          {
-            ALT: () => {
-              const value = this.SUBRULE(this.variable)
-              this.ACTION(() => {
-                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
-                args.push({ name, v })
-              })
-            }
-          }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
@@ -726,25 +643,9 @@ class EzParser extends EmbeddedActionsParser {
       DEF: () => {
         const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Footer) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([
-          {
-            ALT: () => {
-              const { value, type } = this.SUBRULE(this.literal)
-              this.ACTION(() => {
-                const v = this.symbolTable.getLiteralAddr(value, type)! as any
-                args.push({ name, v })
-              })
-            }
-          },
-          {
-            ALT: () => {
-              const value = this.SUBRULE(this.variable)
-              this.ACTION(() => {
-                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
-                args.push({ name, v })
-              })
-            }
-          }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
@@ -772,26 +673,9 @@ class EzParser extends EmbeddedActionsParser {
           { ALT: () => this.CONSUME(Lexer.Gap) },
         ]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([
-          {
-            ALT: () => {
-              const { value, type } = this.SUBRULE(this.literal)
-              this.ACTION(() => {
-                const v = this.symbolTable.getLiteralAddr(value, type)! as any
-                args.push({ name, v })
-              })
-            }
-          },
-          {
-            ALT: () => {
-              const value = this.SUBRULE(this.variable)
-              this.ACTION(() => {
-                const v = this.symbolTable.getVarEntry(value, true)!.addr as any
-                args.push({ name, v })
-              })
-            }
-          }])
-
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })

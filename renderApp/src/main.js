@@ -49,7 +49,6 @@ function mountVElement(vElement, parentDOMNode) {
     if (props.children) {
        // Oeh, we have children. Pass it back to our mount
      // function and let it determine what type it is.
-       console.log(props.children)
        props.children.forEach(child => mount(child, domNode));
     }
   }
@@ -61,7 +60,6 @@ function mountVElement(vElement, parentDOMNode) {
   if (style !== undefined) {
     Object.keys(style).forEach(sKey => domNode.style[sKey] = style[sKey]);
   }
-  console.log(vElement)
   if(vElement.tag === "img"){
     vElement.dom.src = vElement.config.style.src
     vElement.dom.width = 200
