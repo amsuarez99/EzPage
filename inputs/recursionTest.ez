@@ -8,5 +8,10 @@ int sum(int n ) {
 }
 
 void render() {
+  container(){
+    heading(text: "image on a container test", size: 2)
+    image(source: "https://picsum.photos/id/237/200/300")
+  }
+  image(source: "https://picsum.photos/id/237/200/300")
   print(sum(2 + sum(5)))
 }

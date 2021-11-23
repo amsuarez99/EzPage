@@ -4,7 +4,7 @@ int fact(int n) {
   if (n == 0) {
     return 1
   }
-  return n * fact(n - 1); 
+  return n * fact(n - 1)
 }
 
 int factLoop(int n) {
@@ -12,10 +12,18 @@ int factLoop(int n) {
   for (i = 2 to n + 1 step 1) {
     res = res * i
   }
-  return res;
+  return res
+}
+
+void pelos(){
+    heading(text: factLoop(8), size: 2) 
+    heading(text: ":)", size: 3)
 }
 
 void render() {
-  print(fact(5))
-  print(factLoop(5))
+  container(){
+    heading(text: "Factorial", size: 1)    
+    heading(text: fact(5), size: 2)
+    pelos()
+  }
 }

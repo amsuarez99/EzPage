@@ -103,15 +103,6 @@ class VirtualMachine {
       this.currentQuad = this.getNextQuad()
     }
     quadOperations.doRenderLog()
-    console.log('ending...')
-    console.log('global memory')
-    console.dir(this.globalMemory, { depth: null })
-    console.log('literal memory')
-    console.dir(this.literalMemory, { depth: null })
-    console.log('temporal memory')
-    console.dir(this.getCurrentContext().contextMemory.temporalMemory, { depth: null })
-    console.log('local memory')
-    console.dir(this.getCurrentContext().contextMemory.localMemory, { depth: null })
   }
 
   processQuadruple() {
@@ -355,7 +346,6 @@ class VirtualMachine {
         const rightValue = this.checkRenderAddr(rightAddr)
         // parameter
         const result = this.checkRenderAddr(resultAddr)
-        console.log(leftValue, rightValue, result, resultAddr)
         quadOperations.buildRenderStruct(leftAddr, rightValue, result)
         this.incrementInstructionPointer()
         break

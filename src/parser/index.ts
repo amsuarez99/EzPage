@@ -129,7 +129,7 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.params))
     this.CONSUME(Lexer.CParentheses)
-    this.SUBRULE(this.block)
+    this.SUBRULE(this.renderBlock)
     this.ACTION(() => this.symbolTable.handleFuncEnd())
   })
 
@@ -410,11 +410,11 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.If)
     this.SUBRULE(this.parenthesizedExpression)
     this.ACTION(() => this.symbolTable.handleCondition())
-    this.SUBRULE(this.block)
+    this.SUBRULE(this.renderBlock)
     this.OPTION(() => {
       this.CONSUME(Lexer.Else)
       this.ACTION(() => this.symbolTable.handleElseCondition())
-      this.SUBRULE1(this.block)
+      this.SUBRULE1(this.renderBlock)
     })
     this.ACTION(() => this.symbolTable.handleConditionEnd())
   })
@@ -424,7 +424,7 @@ class EzParser extends EmbeddedActionsParser {
     this.ACTION(() => this.symbolTable.handleWhileStart())
     this.SUBRULE(this.parenthesizedExpression)
     this.ACTION(() => this.symbolTable.handleCondition())
-    this.SUBRULE(this.block)
+    this.SUBRULE(this.renderBlock)
     this.ACTION(() => this.symbolTable.handleWhileEnd())
   })
 

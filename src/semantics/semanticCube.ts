@@ -14,8 +14,8 @@ const plusRecord: OperatorRecord = {
     bool: 'Type Error',
   },
   string: {
-    int: 'Type Error',
-    float: 'Type Error',
+    int: 'string',
+    float: 'string',
     string: 'string',
     bool: 'Type Error',
   },

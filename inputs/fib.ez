@@ -27,8 +27,9 @@ int ciclicFib(int count) {
 void render(){
     container(width: "normal"){
         heading(text: "Fibonacci", size: 1)
-        heading(text: fib(7), size: 3)
+        heading(text: "Recursive: ", size: 2)
+        heading(text: fib(20), size: 3)
+        heading(text: "Ciclic: ", size: 2)
+        heading(text: ciclicFib(20), size: 3)
     }
-    print(fib(7))
-    print(ciclicFib(7))
 }

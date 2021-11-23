@@ -160,8 +160,7 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
         config: {
           style: {},
           className: 'hello',
-        },
-        children: []
+        }
       }
       
       if(hasParent){
@@ -207,6 +206,17 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
     case 5:
       console.log("image")
       if(something === "source"){
+       if(hasParent){
+         currentTag.children.push({
+          name: 'img',
+          config: {
+            style: {
+              src: args,
+            },
+          },
+          text: ''
+        })
+       } else{
         tags.push({
           name: 'img',
           config: {
@@ -216,7 +226,8 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
           },
           text: ''
         })
-      } 
+      }
+    } 
       break;
     case 6:
       console.log("card")
