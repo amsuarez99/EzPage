@@ -1,6 +1,7 @@
 import { verify } from "crypto";
 import j from "../../input.json"
-
+document.body.style.height = '100vh'
+document.body.style.background = '#DEDEDE'
 const data = j
 console.log(data)
 
@@ -40,11 +41,9 @@ function mountVText(vText, parentDOMNode) {
 
 function mountVElement(vElement, parentDOMNode) {
   const { className, tag, props, style } = vElement;
-  console.log(parentDOMNode)
 
   const domNode = document.createElement(tag);
   vElement.dom = domNode;
-  console.log(vElement)
   if(props){
 
     if (props.children) {
@@ -62,7 +61,7 @@ function mountVElement(vElement, parentDOMNode) {
     Object.keys(style).forEach(sKey => domNode.style[sKey] = style[sKey]);
   }
   if(vElement.tag === "img"){
-    vElement.dom.src = vElement.config.style.src
+    vElement.dom.src = vElement.style.src
     vElement.dom.width = 200
     vElement.dom.height = 200
   }
@@ -75,10 +74,8 @@ function mountVElement(vElement, parentDOMNode) {
 const root = document.body
 const myApp = createVElement('div', { className: 'my-class' }, 
   data.map((element) => {
-    console.log(element)
     if(element.children){
       return createVElement(element.name, element.config, element.children.map((child) => {
-        console.log(child)
         return createVElement(child.name, child.config, [child.text])
       }))
     }else{

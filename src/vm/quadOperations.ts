@@ -135,7 +135,7 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
     case 2:
       console.log("paragraph")
       const child = {
-        tag: 'p',
+        name: 'p',
         text: args,
         config: {
           style: {},
@@ -188,19 +188,12 @@ export const buildRenderStruct = (tag: number, args: any, something: any) => {
       console.log("image")
       if(something === "source"){
         tags.push({
-          name: 'figure',
+          name: 'img',
           config: {
-            className: 'image is-128x128'
+            style: {
+              src: args,
+            },
           },
-          children: [{
-              tag: 'img',
-              config: {
-                style : {
-                  src: args
-                },
-                props: {}
-              }
-            }],
           text: ''
         })
       } 
