@@ -329,7 +329,7 @@ class SymbolTable {
   }
 
   pushOperand(identifier: string): void {
-    if (!this.getVarEntry(identifier)) throw new Error('Unexisting identifier')
+    if (!this.getVarEntry(identifier)) throw new Error(`Unexisting identifier ${identifier}`)
     const { addr } = this.getVarEntry(identifier) as VarTableEntry
     const { type } = this.memoryMapper.getTypeOn(addr)
     this.operandStack.push(addr)
