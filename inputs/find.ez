@@ -1,5 +1,5 @@
 page find
-float mat[10][15]
+int mat[10][15]
 
 void initMatrix() {
   int rows = 10
@@ -12,37 +12,38 @@ void initMatrix() {
   }
 }
 
-void matrixPrint() {
+string matrixPrint() {
   int rows = 10
   int columns = 15
   int i, j
+  string pText = ">"
   for(i = 0 to rows) {
     for(j = 0 to columns) {
-      print(mat[i][j], " ")
+      pText = pText + mat[i][j] + "__"
     }
-    print("\n")
+    pText = pText + "---"
   }
+  return pText
 }
 
-void find(float item) {
+void find(int item) {
   int rows = 10
   int columns = 15
   int i, j
   for(i = 0 to rows) {
     for(j = 0 to columns) {
       if(mat[i][j] == item) {
-        print(item, " found at position: (", i, ",", j, ")\n")
+        heading(text: item + " found at position: (" + i  + "," + j + ")", size: 1)
         return
       }
     }
   }
-  print("item not found :(\n")
+  heading(text: item + "not found :(", size: 1)
 }
 
 void render() {
-  float item = -1.99
+  int item = 1004
   initMatrix()
-  mat[7][8] = -1.99
+  paragraph(text: matrixPrint())
   find(item)
-  matrixPrint()
 }

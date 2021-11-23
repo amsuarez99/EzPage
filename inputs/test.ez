@@ -1,0 +1,5 @@
+page test
+
+void render() {
+    paragraph(text: "this is test")
+}

@@ -8,7 +8,7 @@ void render() {
     ricardo = ricardo - 1 
     print(ricardo)
   }
-
+  int icardo
   for(icardo = 10 to 0 step -1) {
     print(icardo)
   }

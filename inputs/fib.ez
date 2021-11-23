@@ -6,6 +6,10 @@ int fib(int n){
     }
     return fib(n - 1) + fib(n - 2)
 }
+string getKirby(){
+    string kirby = "https://source.unsplash.com/random"
+    return kirby
+}
 
 int ciclicFib(int count) {
     int iterator, num1 = 0, num2 = 1;
@@ -21,6 +25,11 @@ int ciclicFib(int count) {
 }   
 
 void render(){
-    print(fib(7))
-    print(ciclicFib(7))
+    container(width: "normal"){
+        heading(text: "Fibonacci", size: 1)
+        heading(text: "Recursive: ", size: 2)
+        heading(text: fib(20), size: 3)
+        heading(text: "Ciclic: ", size: 2)
+        heading(text: ciclicFib(20), size: 3)
+    }
 }

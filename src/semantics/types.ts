@@ -4,6 +4,7 @@ export type Type = 'void' | 'pointer' | NonVoidType
 export type TypeError = 'Type Error'
 export type Kind = 'array' | 'matrix' | 'funcReturn'
 export type ScopeSizeEntry = Record<NonVoidType | 'pointer', number>
+export type ContainerArgName = 'justify' | 'background' | 'width' | 'position'
 
 // ! Function Directory Types
 // * This is an object so we can index by identifier name
@@ -49,7 +50,8 @@ export type FuncOperation = 'gosub' | 'endfunc' | 'param' | 'era' | 'return'
 export type GotoOperation = 'goto' | 'gotoF' | 'gotoT' | 'gotoRender'
 export type ArrayOperation = 'verify'
 export type ExtraOperation = 'print' | 'endprog'
-export type Operation = Operator | GotoOperation | FuncOperation | ArrayOperation | ExtraOperation
+export type RenderOperatrion = 'renderOp'
+export type Operation = Operator | GotoOperation | FuncOperation | ArrayOperation | ExtraOperation | RenderOperatrion
 export interface Instruction {
   operation: Operation
   lhs: number

@@ -14,7 +14,8 @@
     "prettier": "prettier --ignore-path .gitignore  \"**/*.+(js|json|ts)\"",
     "format": "npm run prettier -- --write",
     "check-format": "npm run prettier --list-different",
-    "validate": "npm run check-types && npm run check-format && npm run lint && npm run test && npm run build"
+    "validate": "npm run check-types && npm run check-format && npm run lint && npm run test && npm run build",
+    "dev": "parcel renderApp/src/index.html"
   },
   "author": "Adrián Marcelo Suárez Ponce",
   "license": "ISC",
@@ -33,8 +34,10 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "bulma": "^0.9.3",
     "chevrotain": "^9.1.0",
     "lodash": "^4.17.21",
-    "mnemonist": "^0.38.4"
+    "mnemonist": "^0.38.4",
+    "parcel-bundler": "^1.12.5"
   }
 }

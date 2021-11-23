@@ -1,5 +1,5 @@
 import { EmbeddedActionsParser } from 'chevrotain'
-import { Kind, NonVoidType, Type, SymbolTable } from '../semantics'
+import { Kind, NonVoidType, Type, SymbolTable, Operation } from '../semantics'
 import * as Lexer from '..'
 import { log } from '../logger'
 import MemoryMapper from 'semantics/memoryMapper'
@@ -129,7 +129,7 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.params))
     this.CONSUME(Lexer.CParentheses)
-    this.SUBRULE(this.block)
+    this.SUBRULE(this.renderBlock)
     this.ACTION(() => this.symbolTable.handleFuncEnd())
   })
 
@@ -271,6 +271,7 @@ class EzParser extends EmbeddedActionsParser {
     this.ACTION(() => {
       if (dimensions) this.symbolTable.saveOffsetFnResult(id)
     })
+    return id
   })
 
   public assignment = this.RULE('assignment', () => {
@@ -409,11 +410,11 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.If)
     this.SUBRULE(this.parenthesizedExpression)
     this.ACTION(() => this.symbolTable.handleCondition())
-    this.SUBRULE(this.block)
+    this.SUBRULE(this.renderBlock)
     this.OPTION(() => {
       this.CONSUME(Lexer.Else)
       this.ACTION(() => this.symbolTable.handleElseCondition())
-      this.SUBRULE1(this.block)
+      this.SUBRULE1(this.renderBlock)
     })
     this.ACTION(() => this.symbolTable.handleConditionEnd())
   })
@@ -423,7 +424,7 @@ class EzParser extends EmbeddedActionsParser {
     this.ACTION(() => this.symbolTable.handleWhileStart())
     this.SUBRULE(this.parenthesizedExpression)
     this.ACTION(() => this.symbolTable.handleCondition())
-    this.SUBRULE(this.block)
+    this.SUBRULE(this.renderBlock)
     this.ACTION(() => this.symbolTable.handleWhileEnd())
   })
 
@@ -444,7 +445,7 @@ class EzParser extends EmbeddedActionsParser {
     }) as number | undefined
     this.ACTION(() => this.symbolTable.handleControlCompare(id))
     this.CONSUME(Lexer.CParentheses)
-    this.SUBRULE(this.block)
+    this.SUBRULE(this.renderBlock)
     this.ACTION(() => this.symbolTable.handleForEnd(id, stepDir))
   })
 
@@ -496,31 +497,39 @@ class EzParser extends EmbeddedActionsParser {
       { ALT: () => this.SUBRULE(this.layout) },
     ])
   })
-
+  // ! ID : 1
   public container = this.RULE('container', () => {
-    this.CONSUME(Lexer.Container)
+    this.CONSUME(Lexer.Container).image as Operation
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(1))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.containerArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
+    this.ACTION(() => {this.symbolTable.handleRenderStatementEnd(1)})
   })
 
+  // ! ID : 1
+  // ! width fluid, max, default
+  // ! background : color
   public containerArgs = this.RULE('containerArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([
-          { ALT: () => this.CONSUME(Lexer.Justify) },
+        const name = this.OR([
           { ALT: () => this.CONSUME(Lexer.Background) },
           { ALT: () => this.CONSUME(Lexer.Width) },
-          { ALT: () => this.CONSUME(Lexer.Position) },
-        ])
+        ]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(1, ...args))
   })
 
+  // ! ID : 2
   public paragraph = this.RULE('paragraph', () => {
     this.CONSUME(Lexer.Paragraph)
     this.CONSUME(Lexer.OParentheses)
@@ -528,17 +537,23 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.CParentheses)
   })
 
+  // ! ID : 2
   public paragraphArgs = this.RULE('paragraphArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Text) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Text) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(2, ...args))
   })
 
+  // ! ID : 3
   public heading = this.RULE('heading', () => {
     this.CONSUME(Lexer.Heading)
     this.CONSUME(Lexer.OParentheses)
@@ -546,35 +561,48 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.CParentheses)
   })
 
+  // ! ID : 3
   public headingArgs = this.RULE('headingArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Size) }, { ALT: () => this.CONSUME(Lexer.Text) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(3, ...args))
   })
 
+  // ! ID : 4
   public table = this.RULE('table', () => {
     this.CONSUME(Lexer.Table)
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(4))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.tableArgs))
     this.CONSUME(Lexer.CParentheses)
   })
 
+  // ! ID : 4
   public tableArgs = this.RULE('tableArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Data) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Data) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(4, ...args))
   })
 
+  // ! ID : 5
   public image = this.RULE('image', () => {
     this.CONSUME(Lexer.Image)
     this.CONSUME(Lexer.OParentheses)
@@ -582,57 +610,76 @@ class EzParser extends EmbeddedActionsParser {
     this.CONSUME(Lexer.CParentheses)
   })
 
+  // ! ID : 5
   public imageArgs = this.RULE('imageArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Source) }, { ALT: () => this.CONSUME(Lexer.Data) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Source) }, { ALT: () => this.CONSUME(Lexer.Data) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(5, ...args))
   })
 
+  // ! ID : 6
   public card = this.RULE('card', () => {
     this.CONSUME(Lexer.Card)
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(6))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.cardArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
   })
 
+  // ! ID : 6
   public cardArgs = this.RULE('cardArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Footer) }])
+        const name = this.OR([{ ALT: () => this.CONSUME(Lexer.Header) }, { ALT: () => this.CONSUME(Lexer.Footer) }]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(6, ...args))
   })
 
+  // ! ID : 7
   public layout = this.RULE('layout', () => {
     this.CONSUME(Lexer.Layout)
+    this.ACTION(() => this.symbolTable.handleRenderStatementStart(7))
     this.CONSUME(Lexer.OParentheses)
     this.OPTION(() => this.SUBRULE(this.layoutArgs))
     this.CONSUME(Lexer.CParentheses)
     this.SUBRULE(this.renderBlock)
   })
 
+  // ! ID : 7
   public layoutArgs = this.RULE('layoutArgs', () => {
+    const args: { name: any, v: any }[] = []
     this.AT_LEAST_ONE_SEP({
       DEF: () => {
-        this.OR([
+        const name = this.OR([
           { ALT: () => this.CONSUME(Lexer.Padding) },
           { ALT: () => this.CONSUME(Lexer.Grid) },
           { ALT: () => this.CONSUME(Lexer.Gap) },
-        ])
+        ]).image
         this.CONSUME(Lexer.Colon)
-        this.OR1([{ ALT: () => this.SUBRULE(this.literal) }, { ALT: () => this.SUBRULE(this.variable) }])
+        this.SUBRULE(this.expression)
+        const exprAddr = this.ACTION(() => this.symbolTable.handleRenderArg())
+        args.push({ name, v:exprAddr })
       },
       SEP: Lexer.Comma,
     })
+    this.ACTION(() => this.symbolTable.handleRenderArgs(7, ...args))
   })
 }
 

@@ -1,0 +1,22 @@
+page Test
+
+int fib(int n){
+    if(n <= 1){
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+string getKirby(){
+    string kirby = "https://www.smashbros.com/images/og/kirby.jpg"
+    return kirby
+}
+
+void render() {
+     
+    container(width: "normal", background: "blue"){
+        print(fib(2))
+        heading(text: "This is inside a container", size: fib(2))
+        paragraph(text: "this is a child")
+    }
+    print("test")
+}

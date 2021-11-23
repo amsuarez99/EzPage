@@ -9,11 +9,13 @@ void fillArray(int arrSize) {
   }
 }
 
-void arrayPrint(int arrSize) {
+string getSortedArray(int arrSize) {
+  string sortedArray = ">"
   int iterator
   for(iterator = 0 to arrSize)  {
-    print(array[iterator], "\n")
+    sortedArray = sortedArray + array[iterator] + " "
   }
+  return sortedArray
 }
 
 void swap(int a, int b) {
@@ -37,5 +39,9 @@ void render() {
   int arraySize = 10
   fillArray(arraySize)
   bubbleSort(arraySize)
-  arrayPrint(arraySize)
+  container(){
+    heading(text: "BubbleSort", size: 1)    
+    heading(text: "Sorted Array", size: 2)    
+    paragraph(text: getSortedArray(arraySize))
+  }
 }

@@ -1,0 +1,12 @@
+page getimages
+
+string getName(int numberImage) {
+  return "https://picsum.photos/id/" + numberImage + "/200/300"
+}
+
+void render() {
+    int i
+    for(i = 0 to 50){
+        image(source: getName(i))
+    }
+}
