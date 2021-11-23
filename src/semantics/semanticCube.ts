@@ -4,13 +4,13 @@ const plusRecord: OperatorRecord = {
   int: {
     int: 'int',
     float: 'float',
-    string: 'Type Error',
+    string: 'string',
     bool: 'Type Error',
   },
   float: {
     int: 'float',
     float: 'float',
-    string: 'Type Error',
+    string: 'string',
     bool: 'Type Error',
   },
   string: {
